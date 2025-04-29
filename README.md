@@ -7,5 +7,6 @@
 # Run:
 
 ```
+poetry install
 poetry run python3 src/cempa_notify/main.py 
 ```
