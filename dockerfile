@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 4000
 
-CMD ["flask", "run", "--host=0.0.0", "--port=4000"]
+# CMD ["flask", "run", "--host=0.0.0", "--port=4000"]
+CMD ["python", "src/users_manager/server.py"]
