@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
-  cempa_notify:
-    container_name: cempa_notify
-    image: cempa_notify:1.0.0
-    build: .
+  users_management_module:
+    container_name: users_management_module
+    image: users_management_module:1.0.0
+    build: ./Modulo_de_Gerenciamento_de_Usuarios
     ports:
       - "4000:4000"
     environment:
