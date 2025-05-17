@@ -16,12 +16,17 @@ def create_user():
         user = UserService.create(request.get_json())
         return make_response(jsonify(user.json()), 201)
     except Exception as e:
-        return make_response(jsonify({'error': str(e)}), 400)
+        print(f"Error creating user: {e}")
+        return make_response(jsonify({'Usuario já existe!'}), 400)
 
 @bp.route('/users/all', methods=['GET'])
 def get_users():
     try:
         users = UserService.get_all()
+        
+        if not users:
+            return make_response(jsonify({'message': 'no users found'}), 404)
+        
         return make_response(jsonify([u.json() for u in users]), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
