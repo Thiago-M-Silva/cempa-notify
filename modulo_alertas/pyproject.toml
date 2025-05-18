@@ -1,0 +1,25 @@
+[project]
+name = "modulo_alertas"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Julio Cruz",email = "juliocruz@discente.ufg.br"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib (>=3.10.1,<4.0.0)",
+    "cartopy (>=0.24.1,<0.25.0)",
+    "xarray (>=2025.3.1,<2026.0.0)",
+    "netcdf4 (>=1.7.2,<2.0.0)",
+    "requests (>=2.32.3,<3.0.0)",
+    "geopandas (>=0.14.0,<0.15.0)"
+]
+
+[tool.poetry]
+packages = [{include = "modulo_alertas", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
