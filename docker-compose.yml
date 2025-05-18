@@ -1,0 +1,26 @@
+services:
+  users_management_module:
+    container_name: users_management_module
+    image: users_management_module:1.0.0
+    build: ./Modulo_de_Gerenciamento_de_Usuarios
+    ports:
+      - "4000:4000"
+    environment:
+      - DB_URL=postgresql://postgres:postgres@users_db:5432/postgres
+    depends_on:
+      - users_db
+
+  users_db:
+    container_name: users_db
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata: {}
