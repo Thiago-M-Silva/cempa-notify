@@ -1,7 +1,12 @@
-from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, render_template_string, request, jsonify, make_response
 from .services import UserService
+from .form import Form
 
 bp = Blueprint('routes', __name__)
+
+@bp.route("/", methods=["GET"])
+def form():
+    return render_template_string(Form.form_html)
 
 @bp.route('/test', methods=['GET'])
 def test_route():
