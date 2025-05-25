@@ -5,13 +5,17 @@ import cartopy.feature as cfeature
 import xarray as xr
 import numpy as np
 import subprocess
-import pandas as pd
 import os
-import requests
 from urllib.parse import urljoin
 import datetime
 import geopandas as gpd
 from shapely.geometry import Point
+from functools import lru_cache
+import hashlib
+import time
+from file_utils import download_cempa_files
+from datetime import datetime 
+
 
 CITIES = {
     "Goiânia": {
@@ -55,66 +59,27 @@ VARIABLES = {
     }
 }
 
-def download_file(url, local_filepath):
-    """Baixa um arquivo de uma URL para um caminho local."""
-    os.makedirs(os.path.dirname(local_filepath), exist_ok=True)
-    
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(local_filepath, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    return local_filepath
-
-def download_cempa_files(date=None, hours=None):
+@lru_cache(maxsize=32)  # Cache para os últimos 32 arquivos processados
+def get_cached_variable(nc_file, var_name, time_idx=0):
     """
-    Baixa arquivos CTL e GRA do servidor CEMPA para uma data específica.
-    
-    Args:
-        date (str, optional): Data no formato YYYYMMDD. Se None, usa a data atual.
-        hours (list, optional): Lista de horas para baixar (0-23). Se None, baixa todas as horas.
+    Obtém uma variável do arquivo NetCDF com cache.
+    O cache é baseado no nome do arquivo, variável e índice de tempo.
     """
-    if date is None:
-        date = datetime.datetime.now().strftime("%Y%m%d")
+    # Gera uma chave única para o cache baseada no arquivo e variável
+    file_hash = hashlib.md5(f"{nc_file}_{var_name}_{time_idx}".encode()).hexdigest()
     
-    if hours is None:
-        hours = range(24)
-    
-    downloaded_files = []
-    
-    for hour in hours:
-        hour_str = f"{hour:02d}"
-        base_url = f"https://tatu.cempa.ufg.br/BRAMS-dataout/{date}00/"
-        file_prefix = f"Go5km-A-{date[:4]}-{date[4:6]}-{date[6:8]}-{hour_str}0000-g1"
-        
-        ctl_url = urljoin(base_url, f"{file_prefix}.ctl")
-        gra_url = urljoin(base_url, f"{file_prefix}.gra")
-        
-        files_dir = "./files"
-        os.makedirs(files_dir, exist_ok=True)
-        
-        ctl_path = os.path.join(files_dir, f"{file_prefix}.ctl")
-        gra_path = os.path.join(files_dir, f"{file_prefix}.gra")
-        
-        try:
-            print(f"\nBaixando arquivos para hora {hour_str}:00...")
-            print(f"Baixando {ctl_url}...")
-            download_file(ctl_url, ctl_path)
-            print(f"Baixando {gra_url}...")
-            download_file(gra_url, gra_path)
-            print(f"Downloads concluídos com sucesso para hora {hour_str}:00!")
-            downloaded_files.append((ctl_path, gra_path))
-        except requests.RequestException as e:
-            print(f"Erro ao baixar arquivos para hora {hour_str}:00: {e}")
-            continue
-    
-    if downloaded_files:
-        print(f"\nTotal de arquivos baixados com sucesso: {len(downloaded_files)}")
-        return downloaded_files
-    else:
-        print("\nNenhum arquivo foi baixado com sucesso.")
+    try:
+        with xr.open_dataset(nc_file, 
+                           variables=[var_name],  # Carrega apenas a variável necessária
+                           chunks={'time': 1}) as ds:
+            return ds[var_name].isel(time=time_idx).values
+    except Exception as e:
+        print(f"Erro ao processar variável {var_name} do arquivo {nc_file}: {e}")
         return None
 
+def clear_cache():
+    """Limpa o cache quando necessário"""
+    get_cached_variable.cache_clear()
 
 def convert_to_netcdf(ctl_path, output_nc):
     """Converte CTL/GRA para NetCDF usando CDO."""
@@ -139,7 +104,10 @@ def plot_temperature(nc_file, date, output_image=None):
         date (str): Data no formato YYYYMMDD00
         output_image (str, optional): Caminho para salvar a imagem. Se None, mostra o plot.
     """
-    ds = xr.open_dataset(nc_file) 
+    ds = xr.open_dataset(nc_file, 
+                        chunks={'time': 1},  # Carrega apenas um timestep por vez
+                        cache=False,         # Evita cache desnecessário
+                        decode_times=False)  # Desativa decodificação de tempos se não necessário
     data = ds['rh'].isel(time=0)
 
     colors = [
@@ -196,9 +164,10 @@ def plot_humidity(nc_file, date, output_image=None):
         date (str): Data no formato YYYYMMDD00
         output_image (str, optional): Caminho para salvar a imagem. Se None, mostra o plot.
     """
-    ds = xr.open_dataset(nc_file)
-    
-    # Selecionar o primeiro timestep e garantir que temos uma matriz 2D
+    ds = xr.open_dataset(nc_file, 
+                        chunks={'time': 1},  # Carrega apenas um timestep por vez
+                        cache=False,         # Evita cache desnecessário
+                        decode_times=False)  # Desativa decodificação de tempos se não necessário
     data = ds['rh'].isel(time=0)
     
     # Verificar e imprimir as dimensões para debug
@@ -693,9 +662,11 @@ def update_cities_polygons(municipios_gdf):
         return False
 
 if __name__ == "__main__":
+    start_time = time.time()
+    
     try:
-        # Usar a data específica
-        date = "20250518"  # Data fixa para o exemplo
+        # Usar a data atual
+        date = datetime.now().strftime("%Y%m%d")  # Formato: YYYYMMDD
         print(f"Usando data: {date[:4]}-{date[4:6]}-{date[6:8]}")
         
         # Baixar todos os arquivos do dia
@@ -730,9 +701,9 @@ if __name__ == "__main__":
             output_nc = f"./files/saida_{hour}.nc"
             if convert_to_netcdf(ctl_path, output_nc):
                 # Gerar plot de umidade relativa
-                output_plot = f"./files/humidity_plot_{date}_{hour}.png"
-                print(f"\nGerando plot de umidade relativa para {hour}:00...")
-                plot_humidity(output_nc, f"{date}{hour}00", output_plot)
+                # output_plot = f"./files/humidity_plot_{date}_{hour}.png"
+                # print(f"\nGerando plot de umidade relativa para {hour}:00...")
+                # plot_humidity(output_nc, f"{date}{hour}00", output_plot)
                 
                 # Processar todas as cidades para este horário
                 for city_name, city_info in CITIES.items():
@@ -769,3 +740,8 @@ if __name__ == "__main__":
         # Limpar o cache ao finalizar
         if hasattr(find_municipio_by_code, 'cache'):
             del find_municipio_by_code.cache
+        
+        # Calcular e mostrar o tempo total de execução
+        execution_time = time.time() - start_time
+        print(f"\n{'='*50}\nTempo total de execução:\n"
+              f"{f'{int(execution_time//3600)}h {int((execution_time%3600)//60)}m {execution_time%60:.2f}s' if execution_time >= 3600 else f'{int(execution_time//60)}m {execution_time%60:.2f}s' if execution_time >= 60 else f'{execution_time:.2f}s'}\n{'='*50}")

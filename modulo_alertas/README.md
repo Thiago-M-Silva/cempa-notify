@@ -10,3 +10,5 @@
 poetry install
 poetry run python3 src/cempa_notify/main.py 
 ```
+
+https://www.ibge.gov.br/geociencias/organizacao-do-territorio/malhas-territoriais/15774-malhas.html?=&t=downloads
