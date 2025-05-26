@@ -3,20 +3,15 @@ import email.message
 from dotenv import load_dotenv
 import os
 
-def enviar_email(destinatarios):  
-    corpo_email = """
-    Alerta de temperatura acima de 35°C nas próximas 24 horas!
-    """
-
+def enviar_email(destinatarios, corpo_email=None, email_remetente = ""):  
     load_dotenv() 
     
     msg = email.message.Message()
     msg['Subject'] = "Alerta Meteorológico"
-    msg['From'] = 'thiagoavatarnaruto@gmail.com'
+    msg['From'] = email_remetente
     msg['To'] = ", ".join(destinatarios)
 
     password = os.getenv("EMAIL_APP_PASSWORD")
-    print(password)
 
     msg.add_header('Content-Type', 'text/html')
     msg.set_payload(corpo_email)
@@ -30,9 +25,6 @@ def enviar_email(destinatarios):
 
 # Exemplo de uso
 destinatarios = [
-    "thiagobossun06@gmail.com",
-    "thiagoavatarnaruto.marcos@yahoo.com",
-    "thiagomarcos@discente.ufg.br"
 ]
 
-enviar_email(destinatarios)
+enviar_email(destinatarios, "teste de envio de email", "Insira aqui o email do remetente")
