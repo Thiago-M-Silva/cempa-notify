@@ -32,32 +32,22 @@ CITIES = {
             }
         }
     },
-    "Rio Verde": {
-        "ibge_code": 5218805,
-        "polygon": None,
-        "alerts": {
-            "temperature": {
-                "max": 35,
-                "min": 14
-            },
-            "umidade": {
-                "max": 100,
-                "min": 20
-            }
-        }
-    }
+    # "Rio Verde": {
+    #     "ibge_code": 5218805,
+    #     "polygon": None,
+    #     "alerts": {
+    #         "temperature": {
+    #             "max": 35,
+    #             "min": 14
+    #         },
+    #         "umidade": {
+    #             "max": 100,
+    #             "min": 20
+    #         }
+    #     }
+    # }
 }
 
-VARIABLES = {
-    "temperature": {
-        "unit": "°C",
-        "brams_name": "t2mj",
-    },
-    "umidade": {
-        "unit": "%",
-        "brams_name": "rh",
-    }
-}
 
 @lru_cache(maxsize=32)  # Cache para os últimos 32 arquivos processados
 def get_cached_variable(nc_file, var_name, time_idx=0):
@@ -225,161 +215,78 @@ def plot_humidity(nc_file, date, output_image=None):
         plt.show()
     plt.close()
 
-def find_extreme_variables(nc_file, municipio_info, var_types=None, max_distance_km=50):
+# Dicionário que define as propriedades de cada variável meteorológica processada pelo sistema
+# Cada entrada contém configurações específicas para uma variável meteorológica
+VARIABLES = {
+    # Configuração para variável de temperatura
+    "temperature": {
+        "name": "Temperatura",      # Nome de exibição da variável
+        "unit": "°C",               # Unidade de medida (para formatação de valores)
+        "brams_name": "t2mj",       # Nome da variável nos arquivos BRAMS NetCDF
+        # Não possui 'dimension' pois não requer tratamento especial de dimensões
+    },
+    # Configuração para variável de umidade
+    "umidade": {
+        "name": "Umidade",          # Nome de exibição da variável
+        "unit": "%",                # Unidade de medida (para formatação de valores)
+        "brams_name": "rh",         # Nome da variável nos arquivos BRAMS NetCDF
+        "dimension": "lev_2",       # Indica que esta variável possui uma dimensão extra (lev_2)
+                                    # que deve ser tratada especialmente na função find_extreme
+    }
+    # Para adicionar novas variáveis meteorológicas:
+    # 1. Crie uma nova entrada com chave única
+    # 2. Defina name, unit e brams_name
+    # 3. Adicione dimension: "lev_2" se a variável requer seleção de nível
+}
+
+def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
     """
-    Encontra os valores máximos e mínimos de múltiplas variáveis dentro dos limites do município.
+    Função genérica para encontrar valores extremos de uma variável meteorológica.
     
     Args:
         nc_file (str): Caminho do arquivo NetCDF
         municipio_info (dict): Dicionário com informações do município
-        var_types (list): Lista de tipos de variáveis a analisar. Se None, processa todas as variáveis.
-        max_distance_km (float): Distância máxima em km do centro do município para considerar um ponto válido
+        variable (dict): Objeto de variável (item do dicionário VARIABLES)
+        max_distance_km (float): Distância máxima em km do centro do município
+        
+    Returns:
+        dict: Dicionário com os valores extremos encontrados
     """
     try:
-        # Abrir o dataset uma única vez
+        # Extrair informações importantes da variável
+        var_name = variable['brams_name']
+        unit = variable['unit']
+        var_type = next((k for k, v in VARIABLES.items() if v['brams_name'] == var_name), None)
+        var_display_name = variable.get('name', var_name)
+        
+        if not var_type:
+            print(f"Erro: Variável com brams_name '{var_name}' não encontrada em VARIABLES")
+            return None
+            
+        # Abrir o dataset
         ds = xr.open_dataset(nc_file)
         
-        # Se var_types não for especificado, usar todas as variáveis disponíveis
-        if var_types is None:
-            var_types = list(VARIABLES.keys())
-            
-        # Verificar se todas as variáveis existem no arquivo
-        var_names = [VARIABLES[var_type]['brams_name'] for var_type in var_types]
-        missing_vars = [var for var in var_names if var not in ds.data_vars]
-        if missing_vars:
-            print(f"Erro: Variáveis não encontradas no arquivo NetCDF: {missing_vars}")
+        # Verificar se a variável existe no arquivo
+        if var_name not in ds.data_vars:
+            print(f"Erro: Variável '{var_name}' não encontrada no arquivo NetCDF")
             print(f"Variáveis disponíveis: {list(ds.data_vars.keys())}")
             return None
             
-        # Criar máscara do município uma única vez
-        first_var = ds[var_names[0]].isel(time=0)
-        lons, lats = np.meshgrid(first_var.lon.values, first_var.lat.values)
-        points = np.column_stack((lons.flatten(), lats.flatten()))
+        # Obter dados
+        data = ds[var_name].isel(time=0)
         
-        # Criar máscara vetorizada para pontos dentro do polígono
-        mask = np.array([municipio_info['poligono'].contains(Point(lon, lat)) 
-                        for lon, lat in points]).reshape(lons.shape)
-        
-        # Processar todas as variáveis
-        resultados = {}
-        for var_type in var_types:
-            var_info = VARIABLES[var_type]
-            var_name = var_info['brams_name']
-            var_unit = var_info['unit']
-            
-            # Obter dados e aplicar máscara
-            data = ds[var_name].isel(time=0)
-            masked_data = np.where(mask, data.values, np.nan)
-            
-            # Criar array de distâncias do centro
-            lons, lats = np.meshgrid(data.lon.values, data.lat.values)
-            distances = np.array([
-                Point(lon, lat).distance(municipio_info['centro']) * 111  # Converter para km
-                for lon, lat in zip(lons.flatten(), lats.flatten())
-            ]).reshape(lons.shape)
-            
-            # Aplicar máscara de distância
-            distance_mask = distances <= max_distance_km
-            masked_data = np.where(distance_mask, masked_data, np.nan)
-            
-            # Verificar se há dados válidos após a filtragem
-            if np.all(np.isnan(masked_data)):
-                print(f"AVISO: Nenhum dado válido encontrado para {var_type} dentro do raio de {max_distance_km}km")
-                continue
-            
-            # Encontrar valores extremos
-            max_value = float(np.nanmax(masked_data))
-            min_value = float(np.nanmin(masked_data))
-            
-            # Verificar valores fisicamente possíveis
-            if var_type == 'umidade':
-                if min_value < 10 or max_value > 100:  # Umidade relativa deve estar entre 0-100%
-                    print(f"AVISO: Valores de umidade fora do intervalo fisicamente possível: min={min_value}%, max={max_value}%")
-                    # Ajustar para limites físicos
-                    min_value = max(min_value, 0)
-                    max_value = min(max_value, 100)
-            
-            # Encontrar índices dos valores extremos
-            max_indices = np.unravel_index(np.nanargmax(masked_data), masked_data.shape)
-            min_indices = np.unravel_index(np.nanargmin(masked_data), masked_data.shape)
-            
-            # Obter coordenadas dos pontos extremos
-            max_lat = float(data.lat.values[max_indices[0]])
-            max_lon = float(data.lon.values[max_indices[1]])
-            min_lat = float(data.lat.values[min_indices[0]])
-            min_lon = float(data.lon.values[min_indices[1]])
-            
-            # Calcular distâncias do centro
-            max_point = Point(max_lon, max_lat)
-            min_point = Point(min_lon, min_lat)
-            max_distancia_centro = max_point.distance(municipio_info['centro']) * 111
-            min_distancia_centro = min_point.distance(municipio_info['centro']) * 111
-            
-            # Formatar resultados
-            resultados[var_type] = {
-                "tipo_variavel": var_type,
-                "nome_variavel": var_name,
-                "maximo": {
-                    "valor": max_value,
-        "latitude": max_lat,
-        "longitude": max_lon,
-                    "localizacao": f"Lat: {max_lat:.2f}°, Lon: {max_lon:.2f}°",
-                    "valor_formatado": f"{max_value:.1f}{var_unit}",
-                    "distancia_centro_km": max_distancia_centro
-                },
-                "minimo": {
-                    "valor": min_value,
-                    "latitude": min_lat,
-                    "longitude": min_lon,
-                    "localizacao": f"Lat: {min_lat:.2f}°, Lon: {min_lon:.2f}°",
-                    "valor_formatado": f"{min_value:.1f}{var_unit}",
-                    "distancia_centro_km": min_distancia_centro
-                },
-                "municipio": municipio_info['nome'],
-                "unidade": var_unit
-            }
-            
-            # Verificar alertas
-            if var_type in municipio_info.get('alerts', {}):
-                alert_thresholds = municipio_info['alerts'][var_type]
-                if max_value > alert_thresholds.get('max', float('inf')):
-                    print(f"ALERTA: {var_type} acima do limite máximo ({alert_thresholds['max']}{var_unit})")
-                if min_value < alert_thresholds.get('min', float('-inf')):
-                    print(f"ALERTA: {var_type} abaixo do limite mínimo ({alert_thresholds['min']}{var_unit})")
-            
-            # Imprimir resultados
-            print(f"\nValores extremos de {var_type} em {municipio_info['nome']}:")
-            print(f"Máximo: {resultados[var_type]['maximo']['valor_formatado']}")
-            print(f"Localização do máximo: {resultados[var_type]['maximo']['localizacao']}")
-            print(f"Distância do centro (máximo): {max_distancia_centro:.1f} km")
-            print(f"Mínimo: {resultados[var_type]['minimo']['valor_formatado']}")
-            print(f"Localização do mínimo: {resultados[var_type]['minimo']['localizacao']}")
-            print(f"Distância do centro (mínimo): {min_distancia_centro:.1f} km")
-        
-        return resultados
-        
-    except Exception as e:
-        print(f"Erro ao calcular valores extremos: {e}")
-        import traceback
-        print("Rastreamento completo do erro:")
-        print(traceback.format_exc())
-        return None
-
-def find_extreme_humidity(nc_file, municipio_info, max_distance_km=50):
-    """
-    Encontra os valores máximos e mínimos de umidade relativa dentro dos limites do município.
-    """
-    try:
-        ds = xr.open_dataset(nc_file)
-        data = ds['rh'].isel(time=0)
-        
-        # Selecionar a camada correta (mesmo que no plot)
-        if len(data.dims) > 2:
+        # Verificar dimensões e aplicar isel se necessário
+        if 'dimension' in variable and variable['dimension'] == 'lev_2' and 'lev_2' in data.dims:
             data = data.isel(lev_2=0)
+        # elif len(data.dims) > 2 and 'lev_2' in data.dims:
+        #     # Tratamento padrão para dimensões extras
+        #     data = data.isel(lev_2=0)
         
         # Criar máscara do município
         lons, lats = np.meshgrid(data.lon.values, data.lat.values)
         points = np.column_stack((lons.flatten(), lats.flatten()))
+        
+        # Criar máscara vetorizada para pontos dentro do polígono
         mask = np.array([municipio_info['poligono'].contains(Point(lon, lat)) 
                         for lon, lat in points]).reshape(lons.shape)
         
@@ -387,106 +294,6 @@ def find_extreme_humidity(nc_file, municipio_info, max_distance_km=50):
         masked_data = np.where(mask, data.values, np.nan)
         
         # Criar array de distâncias do centro
-        distances = np.array([
-            Point(lon, lat).distance(municipio_info['centro']) * 111
-            for lon, lat in zip(lons.flatten(), lats.flatten())
-        ]).reshape(lons.shape)
-        
-        # Aplicar máscara de distância
-        distance_mask = distances <= max_distance_km
-        masked_data = np.where(distance_mask, masked_data, np.nan)
-        
-        # Encontrar valores extremos
-        max_value = float(np.nanmax(masked_data))
-        min_value = float(np.nanmin(masked_data))
-
-        # Encontrar índices dos valores extremos
-        max_indices = np.unravel_index(np.nanargmax(masked_data), masked_data.shape)
-        min_indices = np.unravel_index(np.nanargmin(masked_data), masked_data.shape)
-        
-        # Obter coordenadas
-        max_lat = float(data.lat.values[max_indices[0]])
-        max_lon = float(data.lon.values[max_indices[1]])
-        min_lat = float(data.lat.values[min_indices[0]])
-        min_lon = float(data.lon.values[min_indices[1]])
-        
-        # Calcular distâncias
-        max_point = Point(max_lon, max_lat)
-        min_point = Point(min_lon, min_lat)
-        max_distancia_centro = max_point.distance(municipio_info['centro']) * 111
-        min_distancia_centro = min_point.distance(municipio_info['centro']) * 111
-        
-        resultado = {
-            "tipo_variavel": "umidade",
-            "nome_variavel": "rh",
-            "maximo": {
-                "valor": max_value,
-                "latitude": max_lat,
-                "longitude": max_lon,
-                "localizacao": f"Lat: {max_lat:.2f}°, Lon: {max_lon:.2f}°",
-                "valor_formatado": f"{max_value:.1f}%",
-                "distancia_centro_km": max_distancia_centro
-            },
-            "minimo": {
-                "valor": min_value,
-                "latitude": min_lat,
-                "longitude": min_lon,
-                "localizacao": f"Lat: {min_lat:.2f}°, Lon: {min_lon:.2f}°",
-                "valor_formatado": f"{min_value:.1f}%",
-                "distancia_centro_km": min_distancia_centro
-            },
-            "municipio": municipio_info['nome'],
-            "unidade": "%"
-        }
-        
-        # Verificar alertas
-        if "umidade" in municipio_info.get('alerts', {}):
-            alert_thresholds = municipio_info['alerts']['umidade']
-            if max_value > alert_thresholds.get('max', float('inf')):
-                print(f"ALERTA: Umidade acima do limite máximo ({alert_thresholds['max']}%)")
-            if min_value < alert_thresholds.get('min', float('-inf')):
-                print(f"ALERTA: Umidade abaixo do limite mínimo ({alert_thresholds['min']}%)")
-        
-        return resultado
-        
-    except Exception as e:
-        print(f"Erro ao calcular valores extremos de umidade: {e}")
-        return None
-
-def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
-    """
-    Encontra os valores máximos e mínimos de temperatura dentro dos limites do município.
-    
-    Args:
-        nc_file (str): Caminho do arquivo NetCDF
-        municipio_info (dict): Dicionário com informações do município
-        max_distance_km (float): Distância máxima em km do centro do município para considerar um ponto válido
-    """
-    try:
-        # Abrir o dataset uma única vez
-        ds = xr.open_dataset(nc_file)
-        
-        # Verificar se a variável existe no arquivo
-        var_name = VARIABLES['temperature']['brams_name']
-        if var_name not in ds.data_vars:
-            print(f"Erro: Variável '{var_name}' não encontrada no arquivo NetCDF")
-            print(f"Variáveis disponíveis: {list(ds.data_vars.keys())}")
-            return None
-            
-        # Criar máscara do município uma única vez
-        data = ds[var_name].isel(time=0)
-        lons, lats = np.meshgrid(data.lon.values, data.lat.values)
-        points = np.column_stack((lons.flatten(), lats.flatten()))
-        
-        # Criar máscara vetorizada para pontos dentro do polígono
-        mask = np.array([municipio_info['poligono'].contains(Point(lon, lat)) 
-                        for lon, lat in points]).reshape(lons.shape)
-        
-        # Obter dados e aplicar máscara
-        masked_data = np.where(mask, data.values, np.nan)
-        
-        # Criar array de distâncias do centro
-        lons, lats = np.meshgrid(data.lon.values, data.lat.values)
         distances = np.array([
             Point(lon, lat).distance(municipio_info['centro']) * 111  # Converter para km
             for lon, lat in zip(lons.flatten(), lats.flatten())
@@ -498,7 +305,7 @@ def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
         
         # Verificar se há dados válidos após a filtragem
         if np.all(np.isnan(masked_data)):
-            print(f"AVISO: Nenhum dado válido encontrado para temperatura dentro do raio de {max_distance_km}km")
+            print(f"AVISO: Nenhum dado válido encontrado para {var_display_name} dentro do raio de {max_distance_km}km")
             return None
         
         # Encontrar valores extremos
@@ -523,14 +330,14 @@ def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
         
         # Formatar resultados
         resultado = {
-            "tipo_variavel": "temperature",
+            "tipo_variavel": var_type,
             "nome_variavel": var_name,
             "maximo": {
                 "valor": max_value,
                 "latitude": max_lat,
                 "longitude": max_lon,
                 "localizacao": f"Lat: {max_lat:.2f}°, Lon: {max_lon:.2f}°",
-                "valor_formatado": f"{max_value:.1f}°C",
+                "valor_formatado": f"{max_value:.1f}{unit}",
                 "distancia_centro_km": max_distancia_centro
             },
             "minimo": {
@@ -538,23 +345,23 @@ def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
                 "latitude": min_lat,
                 "longitude": min_lon,
                 "localizacao": f"Lat: {min_lat:.2f}°, Lon: {min_lon:.2f}°",
-                "valor_formatado": f"{min_value:.1f}°C",
+                "valor_formatado": f"{min_value:.1f}{unit}",
                 "distancia_centro_km": min_distancia_centro
             },
             "municipio": municipio_info['nome'],
-            "unidade": "°C"
+            "unidade": unit
         }
         
         # Verificar alertas
-        if "temperature" in municipio_info.get('alerts', {}):
-            alert_thresholds = municipio_info['alerts']['temperature']
+        if var_type in municipio_info.get('alerts', {}):
+            alert_thresholds = municipio_info['alerts'][var_type]
             if max_value > alert_thresholds.get('max', float('inf')):
-                print(f"ALERTA: Temperatura acima do limite máximo ({alert_thresholds['max']}°C)")
+                print(f"ALERTA: {var_display_name} acima do limite máximo ({alert_thresholds['max']}{unit})")
             if min_value < alert_thresholds.get('min', float('-inf')):
-                print(f"ALERTA: Temperatura abaixo do limite mínimo ({alert_thresholds['min']}°C)")
+                print(f"ALERTA: {var_display_name} abaixo do limite mínimo ({alert_thresholds['min']}{unit})")
         
         # Imprimir resultados
-        print(f"\nValores extremos de temperatura em {municipio_info['nome']}:")
+        print(f"\nValores extremos de {var_display_name} em {municipio_info['nome']}:")
         print(f"Máximo: {resultado['maximo']['valor_formatado']}")
         print(f"Localização do máximo: {resultado['maximo']['localizacao']}")
         print(f"Distância do centro (máximo): {max_distancia_centro:.1f} km")
@@ -565,11 +372,18 @@ def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
         return resultado
         
     except Exception as e:
-        print(f"Erro ao calcular valores extremos de temperatura: {e}")
+        print(f"Erro ao calcular valores extremos de {var_display_name if 'var_display_name' in locals() else 'variável'}: {e}")
         import traceback
         print("Rastreamento completo do erro:")
         print(traceback.format_exc())
         return None
+
+# Compatibilidade com funções existentes
+def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
+    return find_extreme(nc_file, municipio_info, VARIABLES['temperature'], max_distance_km)
+
+def find_extreme_humidity(nc_file, municipio_info, max_distance_km=50):
+    return find_extreme(nc_file, municipio_info, VARIABLES['umidade'], max_distance_km)
 
 def read_municipios_shapefile():
     """Lê o shapefile dos municípios de Goiás."""
@@ -698,7 +512,7 @@ if __name__ == "__main__":
             print(f"\nProcessando arquivos da hora {hour}:00...")
             
             # Converter para NetCDF
-            output_nc = f"./files/saida_{hour}.nc"
+            output_nc = f"./tmp_files/saida_{hour}.nc"
             if convert_to_netcdf(ctl_path, output_nc):
                 # Gerar plot de umidade relativa
                 # output_plot = f"./files/humidity_plot_{date}_{hour}.png"
@@ -725,16 +539,6 @@ if __name__ == "__main__":
                             'centro': city_info['centro'],
                             'alerts': city_info.get('alerts', {})
                         }, 100)
-
-                        # Imprimir resultados da umidade (a temperatura já imprime seus resultados)
-                        if umid_result:
-                            print(f"\nValores extremos de umidade em {city_name} para {hour}:00:")
-                            print(f"Máximo: {umid_result['maximo']['valor_formatado']}")
-                            print(f"Localização do máximo: {umid_result['maximo']['localizacao']}")
-                            print(f"Distância do centro (máximo): {umid_result['maximo']['distancia_centro_km']:.1f} km")
-                            print(f"Mínimo: {umid_result['minimo']['valor_formatado']}")
-                            print(f"Localização do mínimo: {umid_result['minimo']['localizacao']}")
-                            print(f"Distância do centro (mínimo): {umid_result['minimo']['distancia_centro_km']:.1f} km")
 
     finally:
         # Limpar o cache ao finalizar
