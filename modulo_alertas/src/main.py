@@ -15,39 +15,21 @@ import hashlib
 import time
 from file_utils import download_cempa_files
 from datetime import datetime 
+import sys
 
+# Adicionar o diretório raiz ao path para permitir importações absolutas
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from shared_config.cempa_config import VALID_CITIES, VALID_ALERT_TYPES, CITY_NAMES
 
-CITIES = {
-    "Goiânia": {
-        "ibge_code": 5208707,
-        "polygon": None,
-        "alerts": {
-            "temperature": {
-                "max": 35,
-                "min": 14
-            },
-            "umidade    ": {
-                "max": 100,
-                "min": 20
-            }
-        }
-    },
-    # "Rio Verde": {
-    #     "ibge_code": 5218805,
-    #     "polygon": None,
-    #     "alerts": {
-    #         "temperature": {
-    #             "max": 35,
-    #             "min": 14
-    #         },
-    #         "umidade": {
-    #             "max": 100,
-    #             "min": 20
-    #         }
-    #     }
-    # }
-}
-
+# Construir o dicionário CITIES a partir das configurações compartilhadas
+CITIES = {}
+for city_name, city_data in VALID_CITIES.items():
+    CITIES[city_name] = {
+        "ibge_code": city_data["ibge_code"],
+        "polygon": None,  # Será preenchido durante a execução
+        "centro": None,   # Será preenchido durante a execução
+        "alerts": city_data["alerts"]  # Usa os thresholds diretamente da configuração
+    }
 
 @lru_cache(maxsize=32)  # Cache para os últimos 32 arquivos processados
 def get_cached_variable(nc_file, var_name, time_idx=0):
@@ -226,7 +208,7 @@ VARIABLES = {
         # Não possui 'dimension' pois não requer tratamento especial de dimensões
     },
     # Configuração para variável de umidade
-    "umidade": {
+    "humidity": {
         "name": "Umidade",          # Nome de exibição da variável
         "unit": "%",                # Unidade de medida (para formatação de valores)
         "brams_name": "rh",         # Nome da variável nos arquivos BRAMS NetCDF
@@ -235,7 +217,7 @@ VARIABLES = {
     }
     # Para adicionar novas variáveis meteorológicas:
     # 1. Crie uma nova entrada com chave única
-    # 2. Defina name, unit e brams_name
+    # 2. Defina pelo menos name, unit e brams_name
     # 3. Adicione dimension: "lev_2" se a variável requer seleção de nível
 }
 
@@ -278,9 +260,6 @@ def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
         # Verificar dimensões e aplicar isel se necessário
         if 'dimension' in variable and variable['dimension'] == 'lev_2' and 'lev_2' in data.dims:
             data = data.isel(lev_2=0)
-        # elif len(data.dims) > 2 and 'lev_2' in data.dims:
-        #     # Tratamento padrão para dimensões extras
-        #     data = data.isel(lev_2=0)
         
         # Criar máscara do município
         lons, lats = np.meshgrid(data.lon.values, data.lat.values)
@@ -352,13 +331,22 @@ def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
             "unidade": unit
         }
         
-        # Verificar alertas
-        if var_type in municipio_info.get('alerts', {}):
-            alert_thresholds = municipio_info['alerts'][var_type]
-            if max_value > alert_thresholds.get('max', float('inf')):
-                print(f"ALERTA: {var_display_name} acima do limite máximo ({alert_thresholds['max']}{unit})")
-            if min_value < alert_thresholds.get('min', float('-inf')):
-                print(f"ALERTA: {var_display_name} abaixo do limite mínimo ({alert_thresholds['min']}{unit})")
+        # Verificar alertas usando os thresholds específicos da cidade
+        if var_type in municipio_info.get('alerts', {}) and 'nome' in municipio_info:
+            # Obter os thresholds específicos para esta cidade
+            cidade_nome = municipio_info['nome']
+            
+            # Verificar se temos thresholds específicos para esta cidade e variável
+            if cidade_nome in CITIES and var_type in CITIES[cidade_nome]['alerts']:
+                alert_thresholds = CITIES[cidade_nome]['alerts'][var_type]
+                
+                # Verificar máximo
+                if max_value > alert_thresholds.get('max', float('inf')):
+                    print(f"ALERTA: {var_display_name} acima do limite máximo em {cidade_nome} ({alert_thresholds['max']}{unit})")
+                
+                # Verificar mínimo
+                if min_value < alert_thresholds.get('min', float('-inf')):
+                    print(f"ALERTA: {var_display_name} abaixo do limite mínimo em {cidade_nome} ({alert_thresholds['min']}{unit})")
         
         # Imprimir resultados
         print(f"\nValores extremos de {var_display_name} em {municipio_info['nome']}:")
@@ -504,6 +492,9 @@ if __name__ == "__main__":
                         print(f"\nDados disponíveis para {city_name}:")
                         print(f"Código IBGE: {city_info['ibge_code']}")
                         print(f"Centro: Lat {city_info['centro'].y:.4f}°, Lon {city_info['centro'].x:.4f}°")
+                        print(f"Alertas configurados:")
+                        for alert_type, thresholds in city_info['alerts'].items():
+                            print(f"  - {alert_type}: min={thresholds['min']}, max={thresholds['max']}")
 
         # Processar cada par de arquivos (CTL e GRA)
         for ctl_path, gra_path in downloaded_files:
@@ -514,31 +505,29 @@ if __name__ == "__main__":
             # Converter para NetCDF
             output_nc = f"./tmp_files/saida_{hour}.nc"
             if convert_to_netcdf(ctl_path, output_nc):
-                # Gerar plot de umidade relativa
-                # output_plot = f"./files/humidity_plot_{date}_{hour}.png"
-                # print(f"\nGerando plot de umidade relativa para {hour}:00...")
-                # plot_humidity(output_nc, f"{date}{hour}00", output_plot)
-                
                 # Processar todas as cidades para este horário
                 for city_name, city_info in CITIES.items():
                     if city_info['polygon'] is not None:
                         print(f"\nAnalisando {city_name} para {hour}:00...")
-
-                        # Analisar temperatura
-                        temperature_result = find_extreme_temperature(output_nc, {
+                        
+                        # Criar um dicionário de informações para a cidade atual
+                        city_data = {
                             'nome': city_name,
                             'poligono': city_info['polygon'],
                             'centro': city_info['centro'],
-                            'alerts': city_info.get('alerts', {})
-                        }, 100)
-
-                        # Analisar umidade
-                        umid_result = find_extreme_humidity(output_nc, {
-                            'nome': city_name,
-                            'poligono': city_info['polygon'],
-                            'centro': city_info['centro'],
-                            'alerts': city_info.get('alerts', {})
-                        }, 100)
+                            'alerts': city_info['alerts']
+                        }
+                        
+                        # Analisar cada tipo de alerta configurado para a cidade
+                        for alert_type in VALID_ALERT_TYPES:                                
+                            if alert_type in VARIABLES:
+                                print(f"\nVerificando {alert_type} para {city_name}...")
+                                result = find_extreme(output_nc, city_data, VARIABLES[alert_type], 100)
+                                
+                                if result:
+                                    print(f"Análise de {alert_type} para {city_name} concluída com sucesso.")
+                                else:
+                                    print(f"Falha ao analisar {alert_type} para {city_name}.")
 
     finally:
         # Limpar o cache ao finalizar
