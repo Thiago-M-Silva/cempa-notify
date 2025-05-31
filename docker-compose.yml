@@ -2,7 +2,7 @@ services:
   users_management_module:
     container_name: users_management_module
     image: users_management_module:1.0.0
-    build: ./Modulo_de_Gerenciamento_de_Usuarios
+    build: ./modulo_usuarios
     ports:
       - "4000:4000"
     environment:
