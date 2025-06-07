@@ -134,7 +134,6 @@ class Form:
             }
 
             try {
-                // Convert NodeList to array of values
                 const alertasArray = Array.from(alertas).map(cb => cb.value);
                 const res = await fetch('http://127.0.0.1:4000/users', {
                     method: 'POST',
@@ -148,9 +147,8 @@ class Form:
                 });
 
                 const data = await res.json();
-                console.log(data);
                 
-                if (res.status === 201) { // Verifica status 201 (Created) ao invés de res.ok
+                if (res.status === 201) { 
                     alert('Usuário cadastrado com sucesso!');
                     document.getElementById('alertForm').reset();
                 } else {
@@ -161,8 +159,6 @@ class Form:
                 errorMsg.textContent = 'Erro na comunicação com o servidor.';
             }
         });
-
-        alert("Formulário enviado com sucesso!");
     </script>
 
 </body>
