@@ -1,3 +1,7 @@
+"""
+Formulario HTML para cadastro de usuários
+"""
+
 class Form:
     form_html = """
 <!DOCTYPE html>
@@ -41,6 +45,25 @@ class Form:
             border-radius: 4px;
         }
 
+        select[multiple] {
+            width: 90%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        select[multiple] option {
+            padding: 8px;
+            margin: 2px 0;
+        }
+
+        select[multiple] option:checked {
+            background-color: #28a745;
+            color: white;
+        }
+
         .checkbox-group {
             margin-top: 10px;
         }
@@ -68,6 +91,13 @@ class Form:
         button:hover {
             background: #218838;
         }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
     </style>
 </head>
 
@@ -92,10 +122,12 @@ class Form:
             <label><input type="checkbox" name="alerta" value="Humidade"> Humidade</label>
         </div>
 
-        <label for="cidade">Cidade:</label>
-        <select id="cidade" name="cidade">
-            <option value="Goiânia">Goiânia</option>
+        <label for="cidade">Cidades: </label>
+        <select id="cidade" name="cidade" multiple size="3">
+            <option value="Goinia">Goiânia</option>
+            <option value="Rio_Verde">Rio Verde</option>
         </select>
+        <p class="help-text">* Para selecionar múltiplas cidades, mantenha a tecla CTRL pressionada enquanto clica</p>
 
         <div id="errorMsg" class="error"></div>
 
@@ -107,7 +139,7 @@ class Form:
             e.preventDefault();
             const nome = document.getElementById('nome').value.trim();
             const email = document.getElementById('email').value.trim();
-            const cidade = document.getElementById('cidade').value;
+            const cidades = Array.from(document.getElementById('cidade').selectedOptions).map(opt => opt.value);
             const alertas = document.querySelectorAll('input[name="alerta"]:checked');
             const errorMsg = document.getElementById('errorMsg');
             errorMsg.textContent = "";
@@ -128,8 +160,8 @@ class Form:
                 return;
             }
 
-            if (!nome || !email || alertas.length === 0) {
-                errorMsg.textContent = "Preencha todos os campos corretamente.";
+            if (cidades.length === 0) {
+                errorMsg.textContent = "Selecione pelo menos uma cidade.";
                 return;
             }
 
@@ -141,7 +173,7 @@ class Form:
                     body: JSON.stringify({
                         username: nome,
                         email: email,
-                        city: cidade,
+                        cities: cidades,  
                         alert_types: alertasArray
                     })
                 });
@@ -152,10 +184,10 @@ class Form:
                     alert('Usuário cadastrado com sucesso!');
                     document.getElementById('alertForm').reset();
                 } else {
-                    errorMsg.textContent = data.error || 'Erro ao cadastrar usuário.';
+                    errorMsg.textContent = 'Erro ao cadastrar usuário, usuário ';
                 }
             } catch (err) {
-                console.error(err); // Log do erro para debug
+                console.error(err); 
                 errorMsg.textContent = 'Erro na comunicação com o servidor.';
             }
         });

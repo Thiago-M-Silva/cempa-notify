@@ -1,44 +1,78 @@
 from flask import Blueprint, render_template_string, request, jsonify, make_response
 from .services import UserService, AlertService
 from .form import Form
-from .models import AlertType
+from .models import AlertType 
+
+"""
+Rotas de API para gerenciamento de usuários e alertas
+form
+    pagina principal, renderiza o formulario de cadastro de usuários
+
+get_users_by_alert_and_city
+    busca a lista de usuários filtrados por tipo de alerta e cidade
+    parâmetros: alert_type (lista de tipos de alerta), city (lista de cidades)
+
+create_user
+    cria um novo usuário com os dados fornecidos
+    deve-se enviar um body no seguinte formato:
+        {
+            "username": "nome do usuário",
+            "email": "email do usuário",
+            "cities": ["cidade1", "cidade2"],
+            "alert_types": ["tipo1", "tipo2"]
+        }
+
+get_users
+    busca todos os usuários cadastrados
+
+delete_user
+    deleta um usuário pelo ID
+    
+update_user
+    atualiza os dados de um usuário pelo ID
+"""
 
 bp = Blueprint('routes', __name__)
 
 @bp.route("/", methods=["GET"])
 def form():
     return render_template_string(Form.form_html)
-
-@bp.route('/test', methods=['GET'])
-def test_route():
-    try:
-        return make_response(jsonify({'message': 'test route'}), 200)
-    except Exception as e:
-        return make_response(jsonify({'error': str(e)}), 400)
     
 #GET http://localhost:4000/usersByAlert?alert_type=temperature
 @bp.route('/usersByAlert', methods=['GET'])
-def get_users_by_alert():
+def get_users_by_alert_and_city():
     try:
-        alert_type = request.args.get("alert_type")
+        # Pega parâmetros da query string
+        alert_types = request.args.getlist("alert_type")
+        cities = request.args.getlist("city")
 
-        if not alert_type:
-            return make_response(jsonify({'error': 'Missing alert_type parameter'}), 400)
+        if not alert_types and not cities:
+            return make_response(
+                jsonify({'error': 'Necessário informar pelo menos um tipo de alerta ou cidade'}), 
+                400
+            )
 
-        alert_type_obj = AlertType.query.filter_by(name=alert_type).first()
-        
-        if not alert_type_obj:
-            return make_response(jsonify({'message': f'Alert type "{alert_type}" not found'}), 404)
-
-        users = alert_type_obj.users
+        users = AlertService.get_users_by_alert_and_city(alert_types, cities)
 
         if not users:
-            return make_response(jsonify({'message': f'No users found for alert type "{alert_type}"'}), 404)
+            return make_response(
+                jsonify({
+                    'message': 'Nenhum usuário encontrado com os filtros informados',
+                    'filters': {
+                        'alert_types': alert_types,
+                        'cities': cities
+                    }
+                }), 
+                404
+            )
 
-        return make_response(jsonify([user.json() for user in users]), 200)
+        return make_response(jsonify({
+            'total': len(users),
+            'users': [user.json() for user in users]
+        }), 200)
 
     except Exception as e:
-        print(f"Error in get_users_by_alert: {str(e)}")  
+        print(f"Error in get_users_by_alert: {str(e)}")
         return make_response(jsonify({'error': str(e)}), 400)
 
 
