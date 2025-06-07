@@ -13,9 +13,11 @@ from shapely.geometry import Point
 from functools import lru_cache
 import hashlib
 import time
-from file_utils import download_cempa_files
+from file_utils import download_cempa_files, clean_old_files
 from datetime import datetime 
 import sys
+
+pathFiles = "/tmp/cempa"
 
 # Adicionar o diretório raiz ao path para permitir importações absolutas
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
@@ -470,6 +472,8 @@ if __name__ == "__main__":
         # Usar a data atual
         date = datetime.now().strftime("%Y%m%d")  # Formato: YYYYMMDD
         print(f"Usando data: {date[:4]}-{date[4:6]}-{date[6:8]}")
+
+        clean_old_files()
         
         # Baixar todos os arquivos do dia
         downloaded_files = download_cempa_files(date)
@@ -503,7 +507,9 @@ if __name__ == "__main__":
             print(f"\nProcessando arquivos da hora {hour}:00...")
             
             # Converter para NetCDF
-            output_nc = f"./tmp_files/saida_{hour}.nc"
+            # Extrair o nome base do arquivo original para usar no output
+            base_filename = os.path.basename(ctl_path).replace('.ctl', '')
+            output_nc = f"{pathFiles}/{base_filename}.nc"
             if convert_to_netcdf(ctl_path, output_nc):
                 # Processar todas as cidades para este horário
                 for city_name, city_info in CITIES.items():

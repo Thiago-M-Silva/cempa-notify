@@ -46,27 +46,6 @@ VALID_ALERT_TYPES = [
     "humidity",
 ]
 
-# Configurações de validação para formulários e APIs
-VALIDATION_CONFIG = {
-    "username": {
-        "min_length": 3,
-        "max_length": 50,
-        "required": True
-    },
-    "email": {
-        "required": True,
-        "pattern": r'^[\w\.-]+@[\w\.-]+\.\w+$'  # Regex para validação de email
-    },
-    "city": {
-        "required": True,
-        "allowed_values": CITY_NAMES
-    },
-    "alert": {
-        "required": True,
-        "allowed_values": VALID_ALERT_TYPES
-    }
-}
-
 # Mensagens de erro para validações
 ERROR_MESSAGES = {
     "invalid_city": f"Cidade inválida. Escolha uma das seguintes opções: {', '.join(CITY_NAMES)}",
