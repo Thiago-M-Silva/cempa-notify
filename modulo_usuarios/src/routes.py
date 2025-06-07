@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template_string, request, jsonify, make_response
 from .services import UserService, AlertService
 from .form import Form
+from .models import AlertType
 
 bp = Blueprint('routes', __name__)
 
@@ -24,25 +25,31 @@ def get_users_by_alert():
         if not alert_type:
             return make_response(jsonify({'error': 'Missing alert_type parameter'}), 400)
 
-        users = AlertService.get_users_by_alert_type(alert_type)
+        alert_type_obj = AlertType.query.filter_by(name=alert_type).first()
+        
+        if not alert_type_obj:
+            return make_response(jsonify({'message': f'Alert type "{alert_type}" not found'}), 404)
+
+        users = alert_type_obj.users
 
         if not users:
-            return make_response(jsonify({'message': 'no users found'}), 404)
+            return make_response(jsonify({'message': f'No users found for alert type "{alert_type}"'}), 404)
 
         return make_response(jsonify([user.json() for user in users]), 200)
 
     except Exception as e:
+        print(f"Error in get_users_by_alert: {str(e)}")  
         return make_response(jsonify({'error': str(e)}), 400)
 
 
 @bp.route('/users', methods=['POST'])
 def create_user():
     try:
-        user = UserService.create(request.get_json())
+        data = request.get_json()
+        user = UserService.create(data)
         return make_response(jsonify(user.json()), 201)
     except Exception as e:
-        print(f"Error creating user: {e}")
-        return make_response(jsonify({'Usuario já existe!'}), 400)
+        return make_response(jsonify({'error': str(e)}), 400)
 
 @bp.route('/users/all', methods=['GET'])
 def get_users():
@@ -75,20 +82,3 @@ def update_user(id):
         return make_response(jsonify({'error': 'user not found'}), 404)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
-
-# add alerta, para teste 
-@bp.route("/alerts", methods=["POST"])
-def create_alert():
-    try:
-        data = request.get_json()
-        alert = AlertService.create_alert(data)
-
-        if not alert:
-            return jsonify({'error': 'Failed to create alert'}), 400
-
-        return jsonify(alert.json()), 201
-
-    except Exception as e:
-        # db.session.rollback()
-        return jsonify({'error': str(e)}), 400
-
