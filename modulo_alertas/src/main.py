@@ -16,8 +16,13 @@ import time
 from file_utils import download_cempa_files, clean_old_files
 from datetime import datetime 
 import sys
+from sendEmail import EmailSender  # Importar o EmailSender da pasta atual
 
 pathFiles = "/tmp/cempa"
+
+# Inicializar o EmailSender
+email_sender = EmailSender("juliovcruz0@gmail.com")
+ALERT_EMAIL = "omegalgamer@gmail.com"  # Email para envio de alertas
 
 # Adicionar o diretório raiz ao path para permitir importações absolutas
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
@@ -341,14 +346,60 @@ def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
             # Verificar se temos thresholds específicos para esta cidade e variável
             if cidade_nome in CITIES and var_type in CITIES[cidade_nome]['alerts']:
                 alert_thresholds = CITIES[cidade_nome]['alerts'][var_type]
+                alert_sent = False
                 
                 # Verificar máximo
                 if max_value > alert_thresholds.get('max', float('inf')):
                     print(f"ALERTA: {var_display_name} acima do limite máximo em {cidade_nome} ({alert_thresholds['max']}{unit})")
+                    
+                    # Preparar dados do alerta
+                    alert_data = f"""
+                    <html>
+                    <body>
+                        <h2>Alerta Meteorológico - {var_display_name} acima do limite</h2>
+                        <p><strong>Cidade:</strong> {cidade_nome}</p>
+                        <p><strong>Valor:</strong> {max_value:.1f}{unit} (limite: {alert_thresholds['max']}{unit})</p>
+                        <p><strong>Localização:</strong> {resultado['maximo']['localizacao']}</p>
+                        <p><strong>Data/Hora:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                        <p>Este é um email automático do sistema CEMPA.</p>
+                    </body>
+                    </html>
+                    """
+                    
+                    # Enviar alerta por email
+                    try:
+                        email_sender.enviar_email([ALERT_EMAIL], alert_data, f"ALERTA: {var_display_name} acima do limite em {cidade_nome}")
+                        alert_sent = True
+                        print(f"Email de alerta enviado para {ALERT_EMAIL}")
+                    except Exception as e:
+                        print(f"Erro ao enviar email de alerta: {e}")
                 
                 # Verificar mínimo
                 if min_value < alert_thresholds.get('min', float('-inf')):
                     print(f"ALERTA: {var_display_name} abaixo do limite mínimo em {cidade_nome} ({alert_thresholds['min']}{unit})")
+                    
+                    # Só envia novo alerta se não enviou para o máximo
+                    if not alert_sent:
+                        # Preparar dados do alerta
+                        alert_data = f"""
+                        <html>
+                        <body>
+                            <h2>Alerta Meteorológico - {var_display_name} abaixo do limite</h2>
+                            <p><strong>Cidade:</strong> {cidade_nome}</p>
+                            <p><strong>Valor:</strong> {min_value:.1f}{unit} (limite: {alert_thresholds['min']}{unit})</p>
+                            <p><strong>Localização:</strong> {resultado['minimo']['localizacao']}</p>
+                            <p><strong>Data/Hora:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                            <p>Este é um email automático do sistema CEMPA.</p>
+                        </body>
+                        </html>
+                        """
+                        
+                        # Enviar alerta por email
+                        try:
+                            email_sender.enviar_email([ALERT_EMAIL], alert_data, f"ALERTA: {var_display_name} abaixo do limite em {cidade_nome}")
+                            print(f"Email de alerta enviado para {ALERT_EMAIL}")
+                        except Exception as e:
+                            print(f"Erro ao enviar email de alerta: {e}")
         
         # Imprimir resultados
         print(f"\nValores extremos de {var_display_name} em {municipio_info['nome']}:")
@@ -373,7 +424,7 @@ def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
     return find_extreme(nc_file, municipio_info, VARIABLES['temperature'], max_distance_km)
 
 def find_extreme_humidity(nc_file, municipio_info, max_distance_km=50):
-    return find_extreme(nc_file, municipio_info, VARIABLES['umidade'], max_distance_km)
+    return find_extreme(nc_file, municipio_info, VARIABLES['humidity'], max_distance_km)
 
 def read_municipios_shapefile():
     """Lê o shapefile dos municípios de Goiás."""

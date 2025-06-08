@@ -15,7 +15,7 @@ VALID_CITIES = {
                 "max": 35,
                 "min": 14
             },
-            "umidade": {
+            "humidity": {
                 "max": 100,
                 "min": 20
             }
@@ -29,7 +29,7 @@ VALID_CITIES = {
                 "max": 36,  # Valor mais alto devido ao clima mais quente da região
                 "min": 15
             },
-            "umidade": {
+            "humidity": {
                 "max": 100,
                 "min": 15   # Valor mais baixo por ser região mais seca
             }
