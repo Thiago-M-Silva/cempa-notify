@@ -119,12 +119,12 @@ class Form:
         <label>Alerta:</label>
         <div class="checkbox-group">
             <label><input type="checkbox" name="alerta" value="Temperatura"> Temperatura</label>
-            <label><input type="checkbox" name="alerta" value="Humidade"> Humidade</label>
+            <label><input type="checkbox" name="alerta" value="Umidade"> Umidade</label>
         </div>
 
         <label for="cidade">Cidades: </label>
         <select id="cidade" name="cidade" multiple size="3">
-            <option value="Goinia">Goiânia</option>
+            <option value="Goiania">Goiânia</option>
             <option value="Rio_Verde">Rio Verde</option>
         </select>
         <p class="help-text">* Para selecionar múltiplas cidades, mantenha a tecla CTRL pressionada enquanto clica</p>
@@ -167,7 +167,7 @@ class Form:
 
             try {
                 const alertasArray = Array.from(alertas).map(cb => cb.value);
-                const res = await fetch('http://127.0.0.1:4000/users', {
+                const res = await fetch('http://127.0.0.1:8081/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
