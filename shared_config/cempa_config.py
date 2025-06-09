@@ -49,18 +49,18 @@ VALID_CITIES = {
                 "min": 15,
                 # Monthly thresholds (1-12 representing Jan-Dec)
                 "monthly": {
-                    "1": {"max": 34, "min": 17},  # Janeiro
-                    "2": {"max": 34, "min": 17},  # Fevereiro
-                    "3": {"max": 33, "min": 16},  # Março
-                    "4": {"max": 32, "min": 15},  # Abril
-                    "5": {"max": 31, "min": 14},  # Maio
-                    "6": {"max": 30, "min": 12},  # Junho
-                    "7": {"max": 30, "min": 11},  # Julho
-                    "8": {"max": 32, "min": 12},  # Agosto
-                    "9": {"max": 34, "min": 14},  # Setembro
-                    "10": {"max": 35, "min": 16}, # Outubro
-                    "11": {"max": 34, "min": 17}, # Novembro
-                    "12": {"max": 34, "min": 17}  # Dezembro
+                    "1": {"max": 20, "min": 17},  # Janeiro
+                    "2": {"max": 20, "min": 17},  # Fevereiro
+                    "3": {"max": 20, "min": 16},  # Março
+                    "4": {"max": 20, "min": 15},  # Abril
+                    "5": {"max": 20, "min": 14},  # Maio
+                    "6": {"max": 20, "min": 12},  # Junho
+                    "7": {"max": 20, "min": 11},  # Julho
+                    "8": {"max": 20, "min": 12},  # Agosto
+                    "9": {"max": 20, "min": 14},  # Setembro
+                    "10": {"max": 20, "min": 16}, # Outubro
+                    "11": {"max": 20, "min": 17}, # Novembro
+                    "12": {"max": 20, "min": 17}  # Dezembro
                 }
             },
             "humidity": {

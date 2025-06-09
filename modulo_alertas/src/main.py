@@ -28,7 +28,7 @@ from modulo_usuarios.src.services import AlertService
 pathFiles = "/tmp/cempa"
 
 # Inicializar o EmailSender
-email_sender = EmailSender("juliovcruz0@gmail.com")
+email_sender = EmailSender()
 # ALERT_EMAIL = "omegalgamer@gmail.com"  # Email para envio de alertas
 
 # Dicionário para armazenar o histórico de alertas enviados

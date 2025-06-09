@@ -130,7 +130,6 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, locali
         <div style="padding: 20px;">
             <p><strong>Cidade:</strong> {cidade_nome}</p>
             <p><strong>Valor:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
-            <p><strong>Localização:</strong> {localizacao}</p>
             <p><strong>Data/Hora:</strong> {dia_semana}, {now.strftime("%d/%m/%Y %H:%M:%S")}</p>
             <p><strong>Mês:</strong> {month_name}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
@@ -183,7 +182,6 @@ def generate_humidity_alert_email(cidade_nome, valor, threshold, unit, localizac
         <div style="padding: 20px;">
             <p><strong>Cidade:</strong> {cidade_nome}</p>
             <p><strong>Valor:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
-            <p><strong>Localização:</strong> {localizacao}</p>
             <p><strong>Data/Hora:</strong> {dia_semana}, {now.strftime("%d/%m/%Y %H:%M:%S")}</p>
             <p><strong>Mês:</strong> {month_name}</p>
             

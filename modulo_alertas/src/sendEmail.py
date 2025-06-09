@@ -4,10 +4,10 @@ from dotenv import load_dotenv
 import os
 
 class EmailSender:
-    def __init__(self, email_remetente=""):
+    def __init__(self):
         load_dotenv()
-        self.email_remetente = email_remetente
-        self.password = os.getenv("EMAIL_APP_PASSWORD")
+        self.email_remetente = os.getenv("EMAIL_APP_PASSWORD")
+        self.password = os.getenv("EMAIL")
         
     def enviar_email(self, destinatarios, corpo_email=None, assunto="Alerta Meteorológico"):  
         msg = email.message.Message()
