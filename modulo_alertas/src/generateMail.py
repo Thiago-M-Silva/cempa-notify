@@ -96,7 +96,7 @@ def generate_humidity_recommendations_html(humidity_value):
     
     return recommendations_html
 
-def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, localizacao, is_max=True):
+def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, localizacao, is_max=True, difference=0.0):
     """
     Gera o conteúdo HTML para alertas de temperatura.
     
@@ -107,7 +107,7 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, locali
         unit (str): Unidade de medida (°C)
         localizacao (str): Coordenadas da localização
         is_max (bool): True se o alerta é para máxima, False se for mínima
-    
+        difference (float): Diferença entre o valor e o limite
     Returns:
         str: Conteúdo HTML formatado para o email
     """
@@ -129,7 +129,7 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, locali
         </div>
         <div style="padding: 20px;">
             <p><strong>Cidade:</strong> {cidade_nome}</p>
-            <p><strong>Valor:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
+            <p><strong>Valor:</strong> {valor:.1f}{unit} (limite: {threshold}{unit}, diferença do esperado: {difference:.1f}{unit})</p>
             <p><strong>Data/Hora:</strong> {dia_semana}, {now.strftime("%d/%m/%Y %H:%M:%S")}</p>
             <p><strong>Mês:</strong> {month_name}</p>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">

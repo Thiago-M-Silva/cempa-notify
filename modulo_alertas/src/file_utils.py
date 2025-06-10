@@ -87,7 +87,7 @@ def download_cempa_files(date=None, hours=None):
         print("\nNenhum arquivo está disponível.")
         return None
 
-def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra"):
+def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra,HST*-MeteogramASC.out"):
     """
     Remove arquivos que não são do dia atual do diretório especificado.
     Deleta permanentemente os arquivos sem enviá-los para a lixeira.
@@ -122,26 +122,55 @@ def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra"):
         if not os.path.isfile(file_path):
             continue
         
-        # Extrair a data do nome do arquivo (assumindo formato Go5km-A-YYYY-MM-DD-...)
-        try:
-            filename = os.path.basename(file_path)
-            parts = filename.split('-')
-            if len(parts) >= 5:  # Formato esperado: Go5km-A-YYYY-MM-DD-...
-                file_date_str = f"{parts[2]}-{parts[3]}-{parts[4]}"
-                file_date = datetime.datetime.strptime(file_date_str, "%Y-%m-%d").date()
-                
-                if file_date < today_date:
-                    file_size = os.path.getsize(file_path)
-                    freed_space += file_size
+        filename = os.path.basename(file_path)
+        
+        # Verificar se é um arquivo de meteograma (formato HST*-MeteogramASC.out)
+        if filename.startswith("HST") and filename.endswith("-MeteogramASC.out"):
+            try:
+                # Extrair a data do nome do arquivo (formato: HST2025042900-MeteogramASC.out)
+                # onde 2025 é o ano, 04 é o mês e 29 é o dia
+                date_part = filename[3:11]  # Extrai "20250429"
+                if len(date_part) >= 8:
+                    year = int(date_part[0:4])
+                    month = int(date_part[4:6])
+                    day = int(date_part[6:8])
                     
-                    # Deletar o arquivo permanentemente
-                    try:
-                        os.remove(file_path)
-                        deleted_count += 1
-                    except Exception as e:
-                        print(f"Erro ao remover arquivo {file_path}: {e}")
-        except Exception as e:
-            print(f"Erro ao processar arquivo {file_path}: {e}")
+                    file_date = datetime.datetime(year, month, day).date()
+                    
+                    if file_date < today_date:
+                        file_size = os.path.getsize(file_path)
+                        freed_space += file_size
+                        
+                        # Deletar o arquivo permanentemente
+                        try:
+                            os.remove(file_path)
+                            deleted_count += 1
+                            print(f"Removido arquivo de meteograma antigo: {filename}")
+                        except Exception as e:
+                            print(f"Erro ao remover arquivo {file_path}: {e}")
+                            
+            except Exception as e:
+                print(f"Erro ao processar arquivo de meteograma {file_path}: {e}")
+        else:
+            # Extrair a data do nome do arquivo (assumindo formato Go5km-A-YYYY-MM-DD-...)
+            try:
+                parts = filename.split('-')
+                if len(parts) >= 5:  # Formato esperado: Go5km-A-YYYY-MM-DD-...
+                    file_date_str = f"{parts[2]}-{parts[3]}-{parts[4]}"
+                    file_date = datetime.datetime.strptime(file_date_str, "%Y-%m-%d").date()
+                    
+                    if file_date < today_date:
+                        file_size = os.path.getsize(file_path)
+                        freed_space += file_size
+                        
+                        # Deletar o arquivo permanentemente
+                        try:
+                            os.remove(file_path)
+                            deleted_count += 1
+                        except Exception as e:
+                            print(f"Erro ao remover arquivo {file_path}: {e}")
+            except Exception as e:
+                print(f"Erro ao processar arquivo {file_path}: {e}")
     
     freed_space_mb = freed_space / (1024 * 1024)
     print(f"\nLimpeza concluída. {deleted_count} arquivos removidos, liberando {freed_space_mb:.2f} MB de espaço.")

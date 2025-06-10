@@ -20,9 +20,6 @@ class EmailSender:
                 print("ERRO: Arquivo .env não encontrado!", file=sys.stderr)
                 sys.exit(1)
         
-        print(os.getenv("EMAIL"))
-        print(os.getenv("EMAIL_APP_PASSWORD"))
-        
         # Get environment variables
         self.email_remetente = os.getenv("EMAIL")
         self.password = os.getenv("EMAIL_APP_PASSWORD")
@@ -47,4 +44,3 @@ class EmailSender:
         s.login(msg['From'], self.password)
         s.sendmail(msg['From'], destinatarios, msg.as_string().encode('utf-8'))
         s.quit()
-        print('Emails enviados com sucesso!')

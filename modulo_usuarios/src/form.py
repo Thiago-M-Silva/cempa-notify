@@ -1,8 +1,44 @@
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
+from shared_config.config_parser import ConfigParser
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config_files.csv'))
+
+config_parser = ConfigParser(config_path)
+config_parser.parse()
+config_map = config_parser.get_config_map()
+
+
 """
 Formulario HTML para cadastro de usuários
 """
 
 class Form:
+    # Gerando as opções de cidades dinamicamente a partir do config_map
+    @staticmethod
+    def generate_city_options():
+        options_html = ""
+        
+        # Ordenar as cidades pelo nome de exibição para melhor apresentação
+        city_display_names = []
+        
+        for polygon_name, config in config_map.items():
+            display_name = config.get('display_name')
+            if display_name:
+                city_display_names.append(display_name)
+        
+        # Ordenar alfabeticamente
+        city_display_names.sort()
+        
+        # Gerar as opções HTML
+        for display_name in city_display_names:
+            options_html += f'            <option value="{display_name}">{display_name}</option>\n'
+        
+        return options_html
+    
+    # Substitua na string HTML a parte estática das opções de cidades por dinâmica
     form_html = """
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -123,9 +159,8 @@ class Form:
         </div>
 
         <label for="cidade">Cidades: </label>
-        <select id="cidade" name="cidade" multiple size="3">
-            <option value="Goiania">Goiânia</option>
-            <option value="Rio_Verde">Rio Verde</option>
+        <select id="cidade" name="cidade" multiple size="5">
+{city_options}
         </select>
         <p class="help-text">* Para selecionar múltiplas cidades, mantenha a tecla CTRL pressionada enquanto clica</p>
 
@@ -167,7 +202,7 @@ class Form:
 
             try {
                 const alertasArray = Array.from(alertas).map(cb => cb.value);
-                const res = await fetch('http://200.137.215.94:8081/users', {
+                const res = await fetch('http://localhost:8081/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -197,3 +232,6 @@ class Form:
 
 </html>
     """
+    
+    # Substituir o marcador {city_options} pelo HTML gerado dinamicamente
+    form_html = form_html.replace('{city_options}', generate_city_options.__func__())

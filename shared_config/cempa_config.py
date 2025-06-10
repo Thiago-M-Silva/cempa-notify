@@ -18,18 +18,18 @@ VALID_CITIES = {
                 "min": -50,
                 # Monthly thresholds (1-12 representing Jan-Dec)
                 "monthly": {
-                    "1": {"max": 33, "min": 18},  # Janeiro
-                    "2": {"max": 33, "min": 18},  # Fevereiro
-                    "3": {"max": 32, "min": 17},  # Março
-                    "4": {"max": 31, "min": 16},  # Abril
-                    "5": {"max": 30, "min": 15},  # Maio
-                    "6": {"max": 29, "min": 13},  # Junho
-                    "7": {"max": 29, "min": 12},  # Julho
-                    "8": {"max": 31, "min": 13},  # Agosto
-                    "9": {"max": 33, "min": 15},  # Setembro
-                    "10": {"max": 34, "min": 17}, # Outubro
-                    "11": {"max": 33, "min": 18}, # Novembro
-                    "12": {"max": 33, "min": 18}  # Dezembro
+                    "1": {"max": 30.6, "min": -5},  # Janeiro
+                    "2": {"max": 31, "min": -5},  # Fevereiro
+                    "3": {"max": 30.9, "min": -5},  # Março
+                    "4": {"max": 31.2, "min": -5},  # Abril
+                    "5": {"max": 30.3, "min": -5},  # Maio
+                    "6": {"max": 30, "min": -5},  # Junho
+                    "7": {"max": 30.6, "min": -5},  # Julho
+                    "8": {"max": 32.7, "min": -5},  # Agosto
+                    "9": {"max": 34, "min": -5},  # Setembro
+                    "10": {"max": 33.2, "min": -5}, # Outubro
+                    "11": {"max": 31.1, "min": -5}, # Novembro
+                    "12": {"max": 30.6, "min": -5}  # Dezembro
                 }
             },
             "humidity": {
@@ -49,18 +49,18 @@ VALID_CITIES = {
                 "min": 15,
                 # Monthly thresholds (1-12 representing Jan-Dec)
                 "monthly": {
-                    "1": {"max": 20, "min": 17},  # Janeiro
-                    "2": {"max": 20, "min": 17},  # Fevereiro
-                    "3": {"max": 20, "min": 16},  # Março
-                    "4": {"max": 20, "min": 15},  # Abril
-                    "5": {"max": 20, "min": 14},  # Maio
-                    "6": {"max": 20, "min": 12},  # Junho
-                    "7": {"max": 20, "min": 11},  # Julho
-                    "8": {"max": 20, "min": 12},  # Agosto
-                    "9": {"max": 20, "min": 14},  # Setembro
-                    "10": {"max": 20, "min": 16}, # Outubro
-                    "11": {"max": 20, "min": 17}, # Novembro
-                    "12": {"max": 20, "min": 17}  # Dezembro
+                    "1": {"max": 20, "min":-5},  # Janeiro
+                    "2": {"max": 20, "min":-5},  # Fevereiro
+                    "3": {"max": 20, "min":-5},  # Março
+                    "4": {"max": 20, "min":-5},  # Abril
+                    "5": {"max": 20, "min":-5},  # Maio
+                    "6": {"max": 20, "min":-5},  # Junho
+                    "7": {"max": 20, "min":-5},  # Julho
+                    "8": {"max": 20, "min":-5},  # Agosto
+                    "9": {"max": 20, "min":-5},  # Setembro
+                    "10": {"max": 20, "min":-5}, # Outubro
+                    "11": {"max": 20, "min":-5}, # Novembro
+                    "12": {"max": 20, "min":-5}  # Dezembro
                 }
             },
             "humidity": {

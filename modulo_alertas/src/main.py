@@ -18,18 +18,33 @@ from file_utils import download_cempa_files, clean_old_files
 from datetime import datetime, timedelta
 from sendEmail import EmailSender  # Importar o EmailSender da pasta atual
 from generateMail import generate_temperature_alert_email, generate_humidity_alert_email
+from meteogram_parser import MeteogramParser
 
 # Adicionar o diretório raiz ao path para permitir importações absolutas
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from shared_config.cempa_config import VALID_CITIES, VALID_ALERT_TYPES, CITY_NAMES
 from modulo_usuarios.src import create_app
 from modulo_usuarios.src.services import AlertService
+from shared_config.config_parser import ConfigParser
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+configcsvpath = os.path.abspath(os.path.join(current_dir, "config_files.csv"))
+
+config_parser = ConfigParser(configcsvpath)
+config_parser.parse()
+config_map = config_parser.get_config_map()
+
+# Inicializar o MeteogramParser com o caminho correto para o arquivo
+meteogram_file_path = os.path.abspath(os.path.join(current_dir, "..", "tmp_files", "HST2025042900-MeteogramASC.out"))
+print(f"Tentando abrir o arquivo: {meteogram_file_path}")
+meteogram_parser = MeteogramParser(meteogram_file_path)
+data = meteogram_parser.parse()
+print(data)
 
 pathFiles = "/tmp/cempa"
 
 # Inicializar o EmailSender
 email_sender = EmailSender()
-# ALERT_EMAIL = "omegalgamer@gmail.com"  # Email para envio de alertas
 
 # Dicionário para armazenar o histórico de alertas enviados
 # Estrutura: {cidade_nome: {tipo_alerta: timestamp_ultimo_envio}}
@@ -132,136 +147,6 @@ def convert_to_netcdf(ctl_path, output_nc):
     except subprocess.CalledProcessError as e:
         print(f"Erro ao executar comando: {e}")
         return False
-
-def plot_temperature(nc_file, date, output_image=None):
-    """
-    Cria um plot de temperatura a partir dos dados NetCDF.
-    
-    Args:
-        nc_file (str): Caminho do arquivo NetCDF
-        date (str): Data no formato YYYYMMDD00
-        output_image (str, optional): Caminho para salvar a imagem. Se None, mostra o plot.
-    """
-    ds = xr.open_dataset(nc_file, 
-                        chunks={'time': 1},  # Carrega apenas um timestep por vez
-                        cache=False,         # Evita cache desnecessário
-                        decode_times=False)  # Desativa decodificação de tempos se não necessário
-    data = ds['rh'].isel(time=0)
-
-    colors = [
-        '#0000b2', '#005ce6', '#008c8c', '#008000', 
-        '#66b032', '#ffff00', '#ffaa00', '#ff5500', 
-        '#cc0000', '#7f0000'
-    ]
-    cmap = mcolors.LinearSegmentedColormap.from_list("cempa_like", colors, N=256)
-
-    fig = plt.figure(figsize=(10, 10))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-
-    # Usar contourf ao invés de plot para suportar cmap
-    contour = ax.contourf(
-        data.lon,
-        data.lat,
-        data,
-        transform=ccrs.PlateCarree(),
-        cmap=cmap,
-        levels=np.arange(14, 39, 1),
-        extend='both'
-    )
-
-    # Adicionar barra de cores
-    cbar = plt.colorbar(contour, ax=ax, label='Temperatura [°C]')
-    
-    # Adicionar elementos do mapa
-    ax.add_feature(cfeature.BORDERS, linewidth=1)
-    ax.add_feature(cfeature.COASTLINE, linewidth=1)
-    ax.add_feature(cfeature.STATES, linewidth=1)
-    ax.add_feature(cfeature.LAND, linewidth=1)
-    ax.set_extent([-54, -43, -21, -8.5]) 
-
-    # Formatar a data para exibição
-    date_formatted = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
-    
-    plt.title(f"Temperatura 2m para 00z {date_formatted}", fontsize=14)
-    plt.suptitle(f"CEMPA/UFG - Previsão BRAMS iniciada em: 00z {date_formatted}", fontsize=12, color='steelblue')
-    plt.tight_layout()
-    
-    if output_image:
-        plt.savefig(output_image, dpi=300, bbox_inches='tight')
-        print(f"Imagem salva em: {output_image}")
-    else:
-        plt.show()
-    plt.close()
-
-def plot_humidity(nc_file, date, output_image=None):
-    """
-    Cria um plot de umidade relativa a partir dos dados NetCDF.
-    
-    Args:
-        nc_file (str): Caminho do arquivo NetCDF
-        date (str): Data no formato YYYYMMDD00
-        output_image (str, optional): Caminho para salvar a imagem. Se None, mostra o plot.
-    """
-    ds = xr.open_dataset(nc_file, 
-                        chunks={'time': 1},  # Carrega apenas um timestep por vez
-                        cache=False,         # Evita cache desnecessário
-                        decode_times=False)  # Desativa decodificação de tempos se não necessário
-    data = ds['rh'].isel(time=0)
-    
-    # Verificar e imprimir as dimensões para debug
-    print(f"Dimensões dos dados: {data.dims}")
-    print(f"Forma dos dados: {data.shape}")
-    
-    # Garantir que temos uma matriz 2D (lat, lon)
-    if len(data.dims) > 2:
-        # Usar lev_2 que é a dimensão correta
-        data = data.isel(lev_2=0)
-    
-    # Cores para umidade relativa (do seco ao úmido)
-    colors = [
-        '#ffff00', '#ffcc00', '#ff9900', '#ff6600',  # Tons de amarelo/laranja para valores baixos
-        '#00cc00', '#009900', '#006600', '#003300',  # Tons de verde para valores médios
-        '#0000ff', '#000099', '#000066'              # Tons de azul para valores altos
-    ]
-    cmap = mcolors.LinearSegmentedColormap.from_list("humidity_colors", colors, N=256)
-
-    fig = plt.figure(figsize=(10, 10))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-
-    # Usar contourf com níveis apropriados para umidade relativa
-    contour = ax.contourf(
-        data.lon,
-        data.lat,
-        data.values,  # Agora data.values já deve ser 2D
-        transform=ccrs.PlateCarree(),
-        cmap=cmap,
-        levels=np.arange(0, 101, 5),  # Umidade relativa de 0 a 100% em intervalos de 5%
-        extend='both'
-    )
-
-    # Adicionar barra de cores
-    cbar = plt.colorbar(contour, ax=ax, label='Umidade Relativa [%]')
-    
-    # Adicionar elementos do mapa
-    ax.add_feature(cfeature.BORDERS, linewidth=1)
-    ax.add_feature(cfeature.COASTLINE, linewidth=1)
-    ax.add_feature(cfeature.STATES, linewidth=1)
-    ax.add_feature(cfeature.LAND, linewidth=1)
-    ax.set_extent([-54, -43, -21, -8.5]) 
-
-    # Formatar a data para exibição
-    date_formatted = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
-    
-    plt.title(f"Umidade Relativa para 00z {date_formatted}", fontsize=14)
-    plt.suptitle(f"CEMPA/UFG - Previsão BRAMS iniciada em: 00z {date_formatted}", fontsize=12, color='steelblue')
-    plt.tight_layout()
-    
-    if output_image:
-        plt.savefig(output_image, dpi=300, bbox_inches='tight')
-        print(f"Imagem salva em: {output_image}")
-    else:
-        plt.show()
-    plt.close()
 
 # Dicionário que define as propriedades de cada variável meteorológica processada pelo sistema
 # Cada entrada contém configurações específicas para uma variável meteorológica
