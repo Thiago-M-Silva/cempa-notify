@@ -167,7 +167,7 @@ class Form:
 
             try {
                 const alertasArray = Array.from(alertas).map(cb => cb.value);
-                const res = await fetch('http://127.0.0.1:8081/users', {
+                const res = await fetch('http://200.137.215.94:8081/users', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
