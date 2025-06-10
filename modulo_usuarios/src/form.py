@@ -203,7 +203,9 @@ class Form:
 
             try {
                 const alertasArray = Array.from(alertas).map(cb => cb.value);
-                const res = await fetch('http://localhost:8081/users', {
+                // Usar a URL atual para determinar o endereço do servidor
+                const currentUrl = window.location.origin;
+                const res = await fetch(`${currentUrl}/users`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
