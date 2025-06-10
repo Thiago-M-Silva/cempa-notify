@@ -2,12 +2,33 @@ import smtplib
 import email.message
 from dotenv import load_dotenv
 import os
+import sys
+from pathlib import Path
 
 class EmailSender:
     def __init__(self):
-        load_dotenv()
-        self.email_remetente = os.getenv("EMAIL_APP_PASSWORD")
-        self.password = os.getenv("EMAIL")
+        # Look for .env file in the current and parent directories
+        env_path = Path('.env')
+        if env_path.exists():
+            load_dotenv(dotenv_path=env_path)
+        else:
+            # Try parent directory
+            parent_env_path = Path('../.env')
+            if parent_env_path.exists():
+                load_dotenv(dotenv_path=parent_env_path)
+            else:
+                print("ERRO: Arquivo .env não encontrado!", file=sys.stderr)
+                sys.exit(1)
+                
+        # Get environment variables
+        self.email_remetente = os.getenv("EMAIL")
+        self.password = os.getenv("EMAIL_APP_PASSWORD")
+        
+        # Check if environment variables are set
+        if not self.email_remetente or not self.password:
+            print("ERRO: Variáveis de ambiente EMAIL e/ou EMAIL_APP_PASSWORD não definidas!", file=sys.stderr)
+            print("Configure estas variáveis no arquivo .env", file=sys.stderr)
+            sys.exit(1)  # Exit with error code
         
     def enviar_email(self, destinatarios, corpo_email=None, assunto="Alerta Meteorológico"):  
         msg = email.message.Message()
