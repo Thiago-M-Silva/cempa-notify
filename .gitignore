@@ -5,3 +5,6 @@ tmp_files/
 __pycache__/
 *.py[cod]
 *$py.class
+venv/
+*.pyc
+*.log
