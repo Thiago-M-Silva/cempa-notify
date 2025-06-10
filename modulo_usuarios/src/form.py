@@ -46,6 +46,7 @@ class Form:
 <head>
     <meta charset="UTF-8">
     <title>Cadastro Alertas CEMPA</title>
+    <link rel="icon" href="/static/cempa_ico.png" type="image/png">
     <style>
         body {
             font-family: Arial, sans-serif;

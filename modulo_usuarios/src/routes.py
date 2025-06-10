@@ -1,7 +1,8 @@
-from flask import Blueprint, render_template_string, request, jsonify, make_response
+from flask import Blueprint, render_template_string, request, jsonify, make_response, send_from_directory
 from .services import UserService, AlertService
 from .form import Form
 from .models import AlertType 
+import os
 
 """
 Rotas de API para gerenciamento de usuários e alertas
@@ -33,6 +34,19 @@ update_user
 """
 
 bp = Blueprint('routes', __name__)
+
+# Diretório para arquivos estáticos
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static')
+
+@bp.route("/static/<path:filename>")
+def static_files(filename):
+    """Serve arquivos estáticos como CSS, JavaScript e imagens"""
+    return send_from_directory(static_dir, filename)
+
+@bp.route('/favicon.ico')
+def favicon():
+    """Serve o favicon"""
+    return send_from_directory(static_dir, 'cempa_icon.png')
 
 @bp.route("/", methods=["GET"])
 def form():
