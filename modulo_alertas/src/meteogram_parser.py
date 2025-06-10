@@ -151,7 +151,10 @@ class MeteogramParser:
                     # Primeiro campo contém o nome do polígono - Formato: 5730-RMG-Regiao_Metropolitana_de_Goiania - GO
                     parts = line.split()
 
-                    if len(parts) < 1:
+                    if len(parts) < 3:
+                        continue
+
+                    if parts[2] != filter_state:
                         continue
 
                     polygon_name = parts[0]
@@ -230,22 +233,6 @@ class MeteogramParser:
                     all_data.append(row)
         
         return pd.DataFrame(all_data)
-    
-    def save_to_csv(self, output_path, polygon_name=None):
-        """
-        Salva os dados extraídos em um arquivo CSV.
-        
-        Args:
-            output_path (str): Caminho para o arquivo CSV de saída
-            polygon_name (str, optional): Nome do polígono para filtrar. Se None, salva dados de todos os polígonos.
-            
-        Returns:
-            str: Caminho para o arquivo CSV salvo
-        """
-        df = self.to_dataframe(polygon_name)
-        df.to_csv(output_path, index=False)
-        print(f"Dados salvos em {output_path}")
-        return output_path
     
     def get_polygon_names(self):
         """

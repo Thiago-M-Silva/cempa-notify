@@ -6,6 +6,7 @@ from sendEmail import EmailSender
 from generateMail import generate_temperature_alert_email, generate_humidity_alert_email
 from file_utils import clean_old_files
 import sys
+import math
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from modulo_usuarios.src import create_app
 from modulo_usuarios.src.services import AlertService
@@ -113,6 +114,31 @@ class AlertGenerator:
             float: Temperatura em Celsius
         """
         return temp_k - 273.15
+    
+    def calculate_relative_humidity(self, t_max, td_max):
+        """
+        Calcula a umidade relativa usando a fórmula de Magnus-Tetens.
+        
+        Args:
+            t_max (float): Temperatura máxima em Celsius
+            td_max (float): Temperatura do ponto de orvalho em Celsius
+            
+        Returns:
+            float: Umidade relativa em porcentagem (0-100)
+        """
+        # Constantes para a fórmula de Magnus-Tetens
+        a = 17.27
+        b = 237.7
+        
+        # Calcular pressão de saturação para temperatura e ponto de orvalho
+        es_t = 6.112 * math.exp((a * t_max) / (t_max + b))
+        es_td = 6.112 * math.exp((a * td_max) / (td_max + b))
+        
+        # Calcular umidade relativa em porcentagem
+        rh = (es_td / es_t) * 100
+        
+        # Limitar a umidade entre 0 e 100%
+        return max(0, min(100, rh))
     
     def load_meteogram_data(self):
         """
@@ -279,6 +305,7 @@ class AlertGenerator:
         """
         Verifica se há alertas de umidade baseados nos limiares especificados.
         Gera alertas apenas para umidade baixa (abaixo do limiar mínimo).
+        Calcula a umidade relativa a partir de Tmax e TDmax usando a fórmula de Magnus-Tetens.
         
         Args:
             min_threshold (float): Limiar mínimo de umidade (%)
@@ -317,8 +344,17 @@ class AlertGenerator:
             min_humidity_data = None
             
             for seconds, values in time_data.items():
-                if 'UMRL' in values:  # Assumindo que UMRL é a coluna de umidade relativa
-                    humidity = values['UMRL']
+                # Verificar se temos os dados necessários para calcular a umidade relativa
+                if 'Tmax' in values and 'TDmax' in values:
+                    # Converter para Celsius se estão em Kelvin
+                    t_max_celsius = self.kelvin_to_celsius(values['Tmax'])
+                    td_max_celsius = self.kelvin_to_celsius(values['TDmax'])
+                    
+                    # Calcular a umidade relativa
+                    humidity = self.calculate_relative_humidity(t_max_celsius, td_max_celsius)
+                    
+                    # Para depuração
+                    print(f"Cidade: {display_name}, Tmax: {t_max_celsius:.1f}°C, TDmax: {td_max_celsius:.1f}°C, Umidade calculada: {humidity:.1f}%")
                     
                     # Atualizar a umidade mínima
                     if humidity < min_humidity:
@@ -329,7 +365,9 @@ class AlertGenerator:
                             'date': values.get('date', 'N/A'),
                             'humidity': humidity,
                             'threshold': min_threshold,
-                            'difference': humidity - min_threshold
+                            'difference': humidity - min_threshold,
+                            'tmax': t_max_celsius,
+                            'tdmax': td_max_celsius
                         }
             
             # Verificar se há alertas de umidade baixa
@@ -342,6 +380,11 @@ class AlertGenerator:
                     'seconds': min_humidity_data['seconds'],
                     'polygon_name': polygon_name
                 }
+                
+                # Adicionar detalhes de temperatura se disponíveis
+                if 'tmax' in min_humidity_data and 'tdmax' in min_humidity_data:
+                    alerts[display_name]['humidity_low']['tmax'] = min_humidity_data['tmax']
+                    alerts[display_name]['humidity_low']['tdmax'] = min_humidity_data['tdmax']
         
         # Filtrar apenas as cidades com alertas
         return {city: data for city, data in alerts.items() if data}
@@ -470,12 +513,19 @@ class AlertGenerator:
                     print(f"Nenhum destinatário encontrado para alerta de umidade baixa em {city}")
                     continue
                 
+                # Preparar informações adicionais para o email se disponíveis
+                additional_info = f"Data/Hora: {alert['date']}"
+                if 'tmax' in alert and 'tdmax' in alert:
+                    additional_info += f"\nTemperatura máxima: {alert['tmax']:.1f}°C"
+                    additional_info += f"\nTemperatura ponto de orvalho: {alert['tdmax']:.1f}°C"
+                    additional_info += f"\n(Umidade calculada pela fórmula de Magnus-Tetens)"
+                
                 email_content = generate_humidity_alert_email(
                     city,
                     alert['value'],
                     alert['threshold'],
                     "%",
-                    f"Data/Hora: {alert['date']}",
+                    additional_info,
                     False
                 )
                 
@@ -520,6 +570,13 @@ class AlertGenerator:
                 alert = city_alerts['humidity_low']
                 summary += f"  - Umidade baixa: {alert['value']:.1f}% (limite: {alert['threshold']}%)\n"
                 summary += f"    Diferença: {alert['difference']:.1f}%\n"
+                
+                # Adicionar informações de temperatura se disponíveis
+                if 'tmax' in alert and 'tdmax' in alert:
+                    summary += f"    Temperatura máxima (Tmax): {alert['tmax']:.1f}°C\n"
+                    summary += f"    Temperatura ponto de orvalho (TDmax): {alert['tdmax']:.1f}°C\n"
+                    summary += f"    (Umidade calculada pela fórmula de Magnus-Tetens)\n"
+                
                 summary += f"    Data/Hora: {alert['date']}\n"
         
         return summary
