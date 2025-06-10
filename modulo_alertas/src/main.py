@@ -6,6 +6,7 @@ import xarray as xr
 import numpy as np
 import subprocess
 import os
+import sys
 from urllib.parse import urljoin
 import datetime
 import geopandas as gpd
@@ -14,14 +15,91 @@ from functools import lru_cache
 import hashlib
 import time
 from file_utils import download_cempa_files, clean_old_files
-from datetime import datetime 
-import sys
-
-pathFiles = "/tmp/cempa"
+from datetime import datetime, timedelta
+from sendEmail import EmailSender  # Importar o EmailSender da pasta atual
+from generateMail import generate_temperature_alert_email, generate_humidity_alert_email
+from meteogram_parser import MeteogramParser
 
 # Adicionar o diretório raiz ao path para permitir importações absolutas
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from shared_config.cempa_config import VALID_CITIES, VALID_ALERT_TYPES, CITY_NAMES
+from modulo_usuarios.src import create_app
+from modulo_usuarios.src.services import AlertService
+from shared_config.config_parser import ConfigParser
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+configcsvpath = os.path.abspath(os.path.join(current_dir, "config_files.csv"))
+
+config_parser = ConfigParser(configcsvpath)
+config_parser.parse()
+config_map = config_parser.get_config_map()
+
+# Inicializar o MeteogramParser com o caminho correto para o arquivo
+meteogram_file_path = os.path.abspath(os.path.join(current_dir, "..", "tmp_files", "HST2025042900-MeteogramASC.out"))
+print(f"Tentando abrir o arquivo: {meteogram_file_path}")
+meteogram_parser = MeteogramParser(meteogram_file_path)
+data = meteogram_parser.parse()
+print(data)
+
+pathFiles = "/tmp/cempa"
+
+# Inicializar o EmailSender
+email_sender = EmailSender()
+
+# Dicionário para armazenar o histórico de alertas enviados
+# Estrutura: {cidade_nome: {tipo_alerta: timestamp_ultimo_envio}}
+ALERT_HISTORY = {}
+# Tempo mínimo entre alertas do mesmo tipo para a mesma cidade (em horas)
+ALERT_COOLDOWN_HOURS = 24  # 24 horas = 1 dia
+
+# Função para verificar se um alerta pode ser enviado
+def can_send_alert(cidade_nome, alert_type, is_max=True):
+    """
+    Verifica se um alerta pode ser enviado com base no histórico.
+    
+    Args:
+        cidade_nome (str): Nome da cidade
+        alert_type (str): Tipo de alerta (temperature, humidity, etc.)
+        is_max (bool): Se é um alerta de máximo (True) ou mínimo (False)
+    
+    Returns:
+        bool: True se o alerta pode ser enviado, False caso contrário
+    """
+    alert_key = f"{alert_type}_{'max' if is_max else 'min'}"
+    now = datetime.now()
+    
+    # Se não há histórico para esta cidade, pode enviar
+    if cidade_nome not in ALERT_HISTORY:
+        ALERT_HISTORY[cidade_nome] = {}
+        return True
+    
+    # Se não há histórico para este tipo de alerta nesta cidade, pode enviar
+    if alert_key not in ALERT_HISTORY[cidade_nome]:
+        return True
+    
+    # Verifica se já passou tempo suficiente desde o último envio
+    last_sent = ALERT_HISTORY[cidade_nome][alert_key]
+    time_diff = now - last_sent
+    
+    return time_diff.total_seconds() / 3600 >= ALERT_COOLDOWN_HOURS
+
+# Função para registrar o envio de um alerta
+def register_alert_sent(cidade_nome, alert_type, is_max=True):
+    """
+    Registra o envio de um alerta no histórico.
+    
+    Args:
+        cidade_nome (str): Nome da cidade
+        alert_type (str): Tipo de alerta (temperature, humidity, etc.)
+        is_max (bool): Se é um alerta de máximo (True) ou mínimo (False)
+    """
+    alert_key = f"{alert_type}_{'max' if is_max else 'min'}"
+    
+    if cidade_nome not in ALERT_HISTORY:
+        ALERT_HISTORY[cidade_nome] = {}
+    
+    ALERT_HISTORY[cidade_nome][alert_key] = datetime.now()
+    print(f"Alerta registrado: {cidade_nome} - {alert_key} em {ALERT_HISTORY[cidade_nome][alert_key]}")
 
 # Construir o dicionário CITIES a partir das configurações compartilhadas
 CITIES = {}
@@ -30,7 +108,8 @@ for city_name, city_data in VALID_CITIES.items():
         "ibge_code": city_data["ibge_code"],
         "polygon": None,  # Será preenchido durante a execução
         "centro": None,   # Será preenchido durante a execução
-        "alerts": city_data["alerts"]  # Usa os thresholds diretamente da configuração
+        "alerts": city_data["alerts"],  # Usa os thresholds diretamente da configuração
+        "db_name": city_data["db_name"]
     }
 
 @lru_cache(maxsize=32)  # Cache para os últimos 32 arquivos processados
@@ -69,136 +148,6 @@ def convert_to_netcdf(ctl_path, output_nc):
         print(f"Erro ao executar comando: {e}")
         return False
 
-def plot_temperature(nc_file, date, output_image=None):
-    """
-    Cria um plot de temperatura a partir dos dados NetCDF.
-    
-    Args:
-        nc_file (str): Caminho do arquivo NetCDF
-        date (str): Data no formato YYYYMMDD00
-        output_image (str, optional): Caminho para salvar a imagem. Se None, mostra o plot.
-    """
-    ds = xr.open_dataset(nc_file, 
-                        chunks={'time': 1},  # Carrega apenas um timestep por vez
-                        cache=False,         # Evita cache desnecessário
-                        decode_times=False)  # Desativa decodificação de tempos se não necessário
-    data = ds['rh'].isel(time=0)
-
-    colors = [
-        '#0000b2', '#005ce6', '#008c8c', '#008000', 
-        '#66b032', '#ffff00', '#ffaa00', '#ff5500', 
-        '#cc0000', '#7f0000'
-    ]
-    cmap = mcolors.LinearSegmentedColormap.from_list("cempa_like", colors, N=256)
-
-    fig = plt.figure(figsize=(10, 10))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-
-    # Usar contourf ao invés de plot para suportar cmap
-    contour = ax.contourf(
-        data.lon,
-        data.lat,
-        data,
-        transform=ccrs.PlateCarree(),
-        cmap=cmap,
-        levels=np.arange(14, 39, 1),
-        extend='both'
-    )
-
-    # Adicionar barra de cores
-    cbar = plt.colorbar(contour, ax=ax, label='Temperatura [°C]')
-    
-    # Adicionar elementos do mapa
-    ax.add_feature(cfeature.BORDERS, linewidth=1)
-    ax.add_feature(cfeature.COASTLINE, linewidth=1)
-    ax.add_feature(cfeature.STATES, linewidth=1)
-    ax.add_feature(cfeature.LAND, linewidth=1)
-    ax.set_extent([-54, -43, -21, -8.5]) 
-
-    # Formatar a data para exibição
-    date_formatted = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
-    
-    plt.title(f"Temperatura 2m para 00z {date_formatted}", fontsize=14)
-    plt.suptitle(f"CEMPA/UFG - Previsão BRAMS iniciada em: 00z {date_formatted}", fontsize=12, color='steelblue')
-    plt.tight_layout()
-    
-    if output_image:
-        plt.savefig(output_image, dpi=300, bbox_inches='tight')
-        print(f"Imagem salva em: {output_image}")
-    else:
-        plt.show()
-    plt.close()
-
-def plot_humidity(nc_file, date, output_image=None):
-    """
-    Cria um plot de umidade relativa a partir dos dados NetCDF.
-    
-    Args:
-        nc_file (str): Caminho do arquivo NetCDF
-        date (str): Data no formato YYYYMMDD00
-        output_image (str, optional): Caminho para salvar a imagem. Se None, mostra o plot.
-    """
-    ds = xr.open_dataset(nc_file, 
-                        chunks={'time': 1},  # Carrega apenas um timestep por vez
-                        cache=False,         # Evita cache desnecessário
-                        decode_times=False)  # Desativa decodificação de tempos se não necessário
-    data = ds['rh'].isel(time=0)
-    
-    # Verificar e imprimir as dimensões para debug
-    print(f"Dimensões dos dados: {data.dims}")
-    print(f"Forma dos dados: {data.shape}")
-    
-    # Garantir que temos uma matriz 2D (lat, lon)
-    if len(data.dims) > 2:
-        # Usar lev_2 que é a dimensão correta
-        data = data.isel(lev_2=0)
-    
-    # Cores para umidade relativa (do seco ao úmido)
-    colors = [
-        '#ffff00', '#ffcc00', '#ff9900', '#ff6600',  # Tons de amarelo/laranja para valores baixos
-        '#00cc00', '#009900', '#006600', '#003300',  # Tons de verde para valores médios
-        '#0000ff', '#000099', '#000066'              # Tons de azul para valores altos
-    ]
-    cmap = mcolors.LinearSegmentedColormap.from_list("humidity_colors", colors, N=256)
-
-    fig = plt.figure(figsize=(10, 10))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-
-    # Usar contourf com níveis apropriados para umidade relativa
-    contour = ax.contourf(
-        data.lon,
-        data.lat,
-        data.values,  # Agora data.values já deve ser 2D
-        transform=ccrs.PlateCarree(),
-        cmap=cmap,
-        levels=np.arange(0, 101, 5),  # Umidade relativa de 0 a 100% em intervalos de 5%
-        extend='both'
-    )
-
-    # Adicionar barra de cores
-    cbar = plt.colorbar(contour, ax=ax, label='Umidade Relativa [%]')
-    
-    # Adicionar elementos do mapa
-    ax.add_feature(cfeature.BORDERS, linewidth=1)
-    ax.add_feature(cfeature.COASTLINE, linewidth=1)
-    ax.add_feature(cfeature.STATES, linewidth=1)
-    ax.add_feature(cfeature.LAND, linewidth=1)
-    ax.set_extent([-54, -43, -21, -8.5]) 
-
-    # Formatar a data para exibição
-    date_formatted = f"{date[:4]}-{date[4:6]}-{date[6:8]}"
-    
-    plt.title(f"Umidade Relativa para 00z {date_formatted}", fontsize=14)
-    plt.suptitle(f"CEMPA/UFG - Previsão BRAMS iniciada em: 00z {date_formatted}", fontsize=12, color='steelblue')
-    plt.tight_layout()
-    
-    if output_image:
-        plt.savefig(output_image, dpi=300, bbox_inches='tight')
-        print(f"Imagem salva em: {output_image}")
-    else:
-        plt.show()
-    plt.close()
-
 # Dicionário que define as propriedades de cada variável meteorológica processada pelo sistema
 # Cada entrada contém configurações específicas para uma variável meteorológica
 VARIABLES = {
@@ -207,6 +156,7 @@ VARIABLES = {
         "name": "Temperatura",      # Nome de exibição da variável
         "unit": "°C",               # Unidade de medida (para formatação de valores)
         "brams_name": "t2mj",       # Nome da variável nos arquivos BRAMS NetCDF
+        "db_name": "Temperatura"    # Nome da variável no banco de dados para buscar usuários
         # Não possui 'dimension' pois não requer tratamento especial de dimensões
     },
     # Configuração para variável de umidade
@@ -214,7 +164,8 @@ VARIABLES = {
         "name": "Umidade",          # Nome de exibição da variável
         "unit": "%",                # Unidade de medida (para formatação de valores)
         "brams_name": "rh",         # Nome da variável nos arquivos BRAMS NetCDF
-        "dimension": "lev_2",       # Indica que esta variável possui uma dimensão extra (lev_2)
+        "db_name": "Umidade",       # Nome da variável no banco de dados para buscar usuários
+        "dimension": "lev_2"        # Indica que esta variável possui uma dimensão extra (lev_2)
                                     # que deve ser tratada especialmente na função find_extreme
     }
     # Para adicionar novas variáveis meteorológicas:
@@ -242,6 +193,8 @@ def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
         unit = variable['unit']
         var_type = next((k for k, v in VARIABLES.items() if v['brams_name'] == var_name), None)
         var_display_name = variable.get('name', var_name)
+        var_db_name = variable.get('db_name', var_display_name)  # Get the database name for this variable
+        city_db_name = municipio_info['db_name']
         
         if not var_type:
             print(f"Erro: Variável com brams_name '{var_name}' não encontrada em VARIABLES")
@@ -340,15 +293,153 @@ def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
             
             # Verificar se temos thresholds específicos para esta cidade e variável
             if cidade_nome in CITIES and var_type in CITIES[cidade_nome]['alerts']:
+                # Obter o mês atual para usar os limiares mensais
+                current_month = str(datetime.now().month)
+                
+                # Obter os thresholds gerais para a variável
                 alert_thresholds = CITIES[cidade_nome]['alerts'][var_type]
                 
+                # Verificar se existem thresholds mensais para esta variável e mês
+                monthly_thresholds = None
+                if var_type == 'temperature' and 'monthly' in alert_thresholds and current_month in alert_thresholds['monthly']:
+                    monthly_thresholds = alert_thresholds['monthly'][current_month]
+                    print(f"Usando limiares mensais para {cidade_nome} no mês {current_month}: max={monthly_thresholds['max']}, min={monthly_thresholds['min']}")
+                else:
+                    print(f"Usando limiares padrão para {cidade_nome}: max={alert_thresholds['max']}, min={alert_thresholds['min']}")
+                
+                # Usar os thresholds mensais se disponíveis, caso contrário usar os padrão
+                max_threshold = monthly_thresholds['max'] if monthly_thresholds else alert_thresholds.get('max', float('inf'))
+                min_threshold = monthly_thresholds['min'] if monthly_thresholds else alert_thresholds.get('min', float('-inf'))
+                
+                alert_sent = False
+                
+                # Dados de usuários para envio de alertas
+                users_to_notify = []
+                
+                # Conectar com a aplicação para buscar usuários
+                app = create_app()
+                with app.app_context():
+                    # Buscar usuários cadastrados nesta cidade e com este tipo de alerta
+                    users_to_notify = AlertService.get_users_by_alert_and_city(
+                        alert_types=[var_db_name],
+                        cities=[city_db_name]
+                    )
+                    print(f"Found {len(users_to_notify)} users in {cidade_nome} with {var_db_name} alerts")
+                
                 # Verificar máximo
-                if max_value > alert_thresholds.get('max', float('inf')):
-                    print(f"ALERTA: {var_display_name} acima do limite máximo em {cidade_nome} ({alert_thresholds['max']}{unit})")
+                if max_value > max_threshold:
+                    print(f"ALERTA: {var_display_name} acima do limite máximo em {cidade_nome} ({max_threshold}{unit})")
+                    
+                    # Gerar o email adequado ao tipo de variável
+                    if var_type == 'temperature':
+                        alert_data = generate_temperature_alert_email(
+                            cidade_nome, 
+                            max_value, 
+                            max_threshold, 
+                            unit, 
+                            resultado['maximo']['localizacao'], 
+                            is_max=True
+                        )
+                    elif var_type == 'humidity':
+                        alert_data = generate_humidity_alert_email(
+                            cidade_nome, 
+                            max_value, 
+                            max_threshold, 
+                            unit, 
+                            resultado['maximo']['localizacao'], 
+                            is_max=True
+                        )
+                    else:
+                        # Fallback genérico se o tipo não for reconhecido
+                        alert_data = f"""
+                        <html>
+                        <body>
+                            <h2>Alerta Meteorológico - {var_display_name} acima do limite</h2>
+                            <p><strong>Cidade:</strong> {cidade_nome}</p>
+                            <p><strong>Valor:</strong> {max_value:.1f}{unit} (limite: {max_threshold}{unit})</p>
+                            <p><strong>Localização:</strong> {resultado['maximo']['localizacao']}</p>
+                            <p><strong>Data/Hora:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                            <p>Este é um email automático do sistema CEMPA.</p>
+                        </body>
+                        </html>
+                        """
+                    
+                    # Verificar se o alerta pode ser enviado
+                    if can_send_alert(cidade_nome, var_type, True):
+                        # Registrar o envio do alerta
+                        register_alert_sent(cidade_nome, var_type, True)
+                        
+                        # Enviar alertas para os usuários cadastrados
+                        if users_to_notify:
+                            user_emails = [user.email for user in users_to_notify if hasattr(user, 'email') and user.email]
+                            if user_emails:
+                                try:
+                                    email_sender.enviar_email(user_emails, alert_data, f"ALERTA: {var_display_name} acima do limite em {cidade_nome}")
+                                    print(f"Email de alerta enviado para {len(user_emails)} usuários cadastrados")
+                                    alert_sent = True
+                                except Exception as e:
+                                    print(f"Erro ao enviar email de alerta para usuários: {e}")
+                    else:
+                        print(f"Alerta para {var_type} máximo em {cidade_nome} não enviado: período de espera ainda ativo")
+                        # Ainda marcamos como enviado para não tentar enviar o alerta mínimo
+                        alert_sent = True
                 
                 # Verificar mínimo
-                if min_value < alert_thresholds.get('min', float('-inf')):
-                    print(f"ALERTA: {var_display_name} abaixo do limite mínimo em {cidade_nome} ({alert_thresholds['min']}{unit})")
+                if min_value < min_threshold:
+                    print(f"ALERTA: {var_display_name} abaixo do limite mínimo em {cidade_nome} ({min_threshold}{unit})")
+                    
+                    # Só prepara novo alerta se não enviou para o máximo
+                    if not alert_sent:
+                        # Gerar o email adequado ao tipo de variável
+                        if var_type == 'temperature':
+                            alert_data = generate_temperature_alert_email(
+                                cidade_nome, 
+                                min_value, 
+                                min_threshold, 
+                                unit, 
+                                resultado['minimo']['localizacao'], 
+                                is_max=False
+                            )
+                        elif var_type == 'humidity':
+                            alert_data = generate_humidity_alert_email(
+                                cidade_nome, 
+                                min_value, 
+                                min_threshold, 
+                                unit, 
+                                resultado['minimo']['localizacao'], 
+                                is_max=False
+                            )
+                        else:
+                            # Fallback genérico se o tipo não for reconhecido
+                            alert_data = f"""
+                            <html>
+                            <body>
+                                <h2>Alerta Meteorológico - {var_display_name} abaixo do limite</h2>
+                                <p><strong>Cidade:</strong> {cidade_nome}</p>
+                                <p><strong>Valor:</strong> {min_value:.1f}{unit} (limite: {min_threshold}{unit})</p>
+                                <p><strong>Localização:</strong> {resultado['minimo']['localizacao']}</p>
+                                <p><strong>Data/Hora:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
+                                <p>Este é um email automático do sistema CEMPA.</p>
+                            </body>
+                            </html>
+                            """
+                        
+                        # Verificar se o alerta pode ser enviado
+                        if can_send_alert(cidade_nome, var_type, False):
+                            # Registrar o envio do alerta
+                            register_alert_sent(cidade_nome, var_type, False)
+                            
+                            # Enviar alertas para os usuários cadastrados
+                            if users_to_notify:
+                                user_emails = [user.email for user in users_to_notify if hasattr(user, 'email') and user.email]
+                                if user_emails:
+                                    try:
+                                        email_sender.enviar_email(user_emails, alert_data, f"ALERTA: {var_display_name} abaixo do limite em {cidade_nome}")
+                                        print(f"Email de alerta enviado para {len(user_emails)} usuários cadastrados")
+                                    except Exception as e:
+                                        print(f"Erro ao enviar email de alerta para usuários: {e}")
+                        else:
+                            print(f"Alerta para {var_type} mínimo em {cidade_nome} não enviado: período de espera ainda ativo")
         
         # Imprimir resultados
         print(f"\nValores extremos de {var_display_name} em {municipio_info['nome']}:")
@@ -367,13 +458,6 @@ def find_extreme(nc_file, municipio_info, variable, max_distance_km=50):
         print("Rastreamento completo do erro:")
         print(traceback.format_exc())
         return None
-
-# Compatibilidade com funções existentes
-def find_extreme_temperature(nc_file, municipio_info, max_distance_km=50):
-    return find_extreme(nc_file, municipio_info, VARIABLES['temperature'], max_distance_km)
-
-def find_extreme_humidity(nc_file, municipio_info, max_distance_km=50):
-    return find_extreme(nc_file, municipio_info, VARIABLES['umidade'], max_distance_km)
 
 def read_municipios_shapefile():
     """Lê o shapefile dos municípios de Goiás."""
@@ -459,6 +543,36 @@ def update_cities_polygons(municipios_gdf):
             else:
                 print(f"ERRO: Não foi possível encontrar o polígono para {city_name}")
         
+        # Exibir informações das cidades, incluindo limiares mensais de temperatura
+        print("\n===== Configurações de Cidades e Alertas =====")
+        for city_name, city_info in CITIES.items():
+            print(f"\nInformações para {city_name}:")
+            print(f"  Código IBGE: {city_info['ibge_code']}")
+            print(f"  Nome no Banco de Dados: {city_info['db_name']}")
+            
+            if 'centro' in city_info and city_info['centro'] is not None:
+                print(f"  Centro: Lat {city_info['centro'].y:.4f}°, Lon {city_info['centro'].x:.4f}°")
+            
+            print("  Alertas configurados:")
+            for alert_type, thresholds in city_info['alerts'].items():
+                print(f"    - {alert_type}:")
+                
+                # Exibir thresholds padrão
+                if 'max' in thresholds:
+                    print(f"      Padrão: max={thresholds['max']}, min={thresholds['min']}")
+                
+                # Exibir thresholds mensais para temperatura
+                if alert_type == 'temperature' and 'monthly' in thresholds:
+                    print("      Limiares mensais:")
+                    for month, month_thresholds in thresholds['monthly'].items():
+                        month_name = {
+                            '1': 'Janeiro', '2': 'Fevereiro', '3': 'Março',
+                            '4': 'Abril', '5': 'Maio', '6': 'Junho',
+                            '7': 'Julho', '8': 'Agosto', '9': 'Setembro',
+                            '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
+                        }.get(month, month)
+                        print(f"        {month_name}: max={month_thresholds['max']}, min={month_thresholds['min']}")
+        
         return True
         
     except Exception as e:
@@ -521,7 +635,8 @@ if __name__ == "__main__":
                             'nome': city_name,
                             'poligono': city_info['polygon'],
                             'centro': city_info['centro'],
-                            'alerts': city_info['alerts']
+                            'alerts': city_info['alerts'],
+                            'db_name': city_info['db_name']
                         }
                         
                         # Analisar cada tipo de alerta configurado para a cidade

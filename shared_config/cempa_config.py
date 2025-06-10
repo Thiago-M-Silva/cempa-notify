@@ -10,28 +10,62 @@ VALID_CITIES = {
     "Goiânia": {
         "ibge_code": 5208707,
         "display_name": "Goiânia",
+        "db_name": "Goiania",
         "alerts": {
             "temperature": {
+                # Default thresholds (used as fallback)
                 "max": 35,
-                "min": 14
+                "min": -50,
+                # Monthly thresholds (1-12 representing Jan-Dec)
+                "monthly": {
+                    "1": {"max": 30.6, "min": -5},  # Janeiro
+                    "2": {"max": 31, "min": -5},  # Fevereiro
+                    "3": {"max": 30.9, "min": -5},  # Março
+                    "4": {"max": 31.2, "min": -5},  # Abril
+                    "5": {"max": 30.3, "min": -5},  # Maio
+                    "6": {"max": 30, "min": -5},  # Junho
+                    "7": {"max": 30.6, "min": -5},  # Julho
+                    "8": {"max": 32.7, "min": -5},  # Agosto
+                    "9": {"max": 34, "min": -5},  # Setembro
+                    "10": {"max": 33.2, "min": -5}, # Outubro
+                    "11": {"max": 31.1, "min": -5}, # Novembro
+                    "12": {"max": 30.6, "min": -5}  # Dezembro
+                }
             },
-            "umidade": {
+            "humidity": {
                 "max": 100,
-                "min": 20
+                "min": 30   # Alertas abaixo de 30% (estado de atenção)
             }
         }
     },
     "Rio Verde": {
         "ibge_code": 5218805,
         "display_name": "Rio Verde",
+        "db_name": "Rio_Verde",
         "alerts": {
             "temperature": {
+                # Default thresholds (used as fallback)
                 "max": 36,  # Valor mais alto devido ao clima mais quente da região
-                "min": 15
+                "min": 15,
+                # Monthly thresholds (1-12 representing Jan-Dec)
+                "monthly": {
+                    "1": {"max": 20, "min":-5},  # Janeiro
+                    "2": {"max": 20, "min":-5},  # Fevereiro
+                    "3": {"max": 20, "min":-5},  # Março
+                    "4": {"max": 20, "min":-5},  # Abril
+                    "5": {"max": 20, "min":-5},  # Maio
+                    "6": {"max": 20, "min":-5},  # Junho
+                    "7": {"max": 20, "min":-5},  # Julho
+                    "8": {"max": 20, "min":-5},  # Agosto
+                    "9": {"max": 20, "min":-5},  # Setembro
+                    "10": {"max": 20, "min":-5}, # Outubro
+                    "11": {"max": 20, "min":-5}, # Novembro
+                    "12": {"max": 20, "min":-5}  # Dezembro
+                }
             },
-            "umidade": {
+            "humidity": {
                 "max": 100,
-                "min": 15   # Valor mais baixo por ser região mais seca
+                "min": 30   # Alertas abaixo de 30% (estado de atenção)
             }
         }
     }
