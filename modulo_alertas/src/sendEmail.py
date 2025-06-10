@@ -19,14 +19,17 @@ class EmailSender:
             else:
                 print("ERRO: Arquivo .env não encontrado!", file=sys.stderr)
                 sys.exit(1)
-                
+        
+        print(os.getenv("EMAIL"))
+        print(os.getenv("EMAIL_APP_PASSWORD"))
+        
         # Get environment variables
         self.email_remetente = os.getenv("EMAIL")
         self.password = os.getenv("EMAIL_APP_PASSWORD")
         
-        # Check if environment variables are set
-        if not self.email_remetente or not self.password:
-            print("ERRO: Variáveis de ambiente EMAIL e/ou EMAIL_APP_PASSWORD não definidas!", file=sys.stderr)
+        # Check if environment variables are set and not empty
+        if not self.email_remetente or self.email_remetente == "" or not self.password or self.password == "":
+            print("ERRO: Variáveis de ambiente EMAIL e/ou EMAIL_APP_PASSWORD não definidas ou vazias!", file=sys.stderr)
             print("Configure estas variáveis no arquivo .env", file=sys.stderr)
             sys.exit(1)  # Exit with error code
         
