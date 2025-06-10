@@ -26,7 +26,7 @@ echo "Diretório atual: $(pwd)"
 echo "Variáveis de ambiente carregadas"
 
 # Executar o script com Poetry a partir do diretório atual
-/home/suporte/.local/bin/poetry run python3 src/main.py
+/home/suporte/.local/bin/poetry run python3 src/alert_generator.py
 
 # Registrar finalização
 echo "Script finalizado em $(date) com código de saída $?"
