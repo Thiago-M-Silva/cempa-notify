@@ -15,7 +15,9 @@ dependencies = [
     "requests (>=2.32.3,<3.0.0)",
     "geopandas (>=0.14.0,<0.15.0)",
     "dask (<2025.0.0)",
-    "dotenv (>=0.9.9,<0.10.0)"
+    "dotenv (>=0.9.9,<0.10.0)",
+    "flask (>=2.0.0,<3.0.0)",
+    "flask-cors (>=3.0.10,<4.0.0)"
 ]
 
 [tool.poetry]
