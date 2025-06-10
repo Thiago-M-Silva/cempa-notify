@@ -17,7 +17,8 @@ dependencies = [
     "dask (<2025.0.0)",
     "dotenv (>=0.9.9,<0.10.0)",
     "flask (>=2.0.0,<3.0.0)",
-    "flask-cors (>=3.0.10,<4.0.0)"
+    "flask-cors (>=3.0.10,<4.0.0)",
+    "flask-sqlalchemy (>=3.0.0,<4.0.0)"
 ]
 
 [tool.poetry]
