@@ -142,6 +142,21 @@ class Form:
             background: #218838;
         }
 
+        #addCityBtn {
+            margin-top: 10px;
+            padding: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 90%;
+        }
+
+        #addCityBtn:hover {
+            background: #0056b3;
+        }
+
         .help-text {
             font-size: 12px;
             color: #666;
@@ -234,14 +249,19 @@ class Form:
             }
             try {
                 const currentUrl = window.location.origin;
+                // Criar o novo formato de JSON
+                const alerts = cidades.map((city, index) => ({
+                    city: city,
+                    types: alert_types[index]
+                }));
+                
                 const res = await fetch(`${currentUrl}/users`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username: nome,
                         email: email,
-                        cities: cidades,
-                        alert_types: alert_types
+                        alerts: alerts
                     })
                 });
                 const data = await res.json();
