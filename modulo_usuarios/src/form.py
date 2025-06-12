@@ -73,7 +73,14 @@ class Form:
         }
 
         input[type="text"],
-        input[type="email"],
+        input[type="email"] {
+            width: 90%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
         select {
             width: 90%;
             padding: 8px;
@@ -82,27 +89,33 @@ class Form:
             border-radius: 4px;
         }
 
-        select[multiple] {
-            width: 90%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: white;
-        }
-
-        select[multiple] option {
-            padding: 8px;
-            margin: 2px 0;
-        }
-
-        select[multiple] option:checked {
-            background-color: #28a745;
-            color: white;
-        }
-
-        .checkbox-group {
+        .city-block {
+            background: #e9ecef;
+            border-radius: 6px;
+            padding: 10px;
             margin-top: 10px;
+            margin-bottom: 10px;
+            position: relative;
+        }
+
+        .city-block strong {
+            font-size: 1.1em;
+        }
+
+        .city-block .remove-btn {
+            position: absolute;
+            right: 10px;
+            top: 10px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 2px 8px;
+            cursor: pointer;
+        }
+
+        .city-block .remove-btn:hover {
+            background: #b52a37;
         }
 
         .checkbox-group label {
@@ -115,7 +128,7 @@ class Form:
             font-size: 0.9em;
         }
 
-        button {
+        button[type="submit"] {
             margin-top: 20px;
             padding: 10px;
             background: #28a745;
@@ -125,7 +138,7 @@ class Form:
             cursor: pointer;
         }
 
-        button:hover {
+        button[type="submit"]:hover {
             background: #218838;
         }
 
@@ -139,71 +152,87 @@ class Form:
 </head>
 
 <body>
-
     <form id="alertForm">
         <h2>Cadastro Alertas CEMPA</h2>
-
-        <p>
-            Cadastre-se para receber alertas meteorológicos por e-mail diretamente do CEMPA.
-        </p>
-
+        <p>Cadastre-se para receber alertas meteorológicos por e-mail diretamente do CEMPA.</p>
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required>
-
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
-
-        <label>Alerta:</label>
-        <div class="checkbox-group">
-            <label><input type="checkbox" name="alerta" value="Temperatura"> Temperatura</label>
-            <label><input type="checkbox" name="alerta" value="Umidade"> Umidade</label>
-        </div>
-
-        <label for="cidade">Cidades: </label>
-        <select id="cidade" name="cidade" multiple size="5">
-{city_options}
-        </select>
-        <p class="help-text">* Para selecionar múltiplas cidades, mantenha a tecla CTRL pressionada enquanto clica</p>
-
+        <label for="cidadeSelect">Adicionar cidade:</label>
+        <select id="cidadeSelect">
+{city_options}        </select>
+        <button type="button" id="addCityBtn">Adicionar cidade</button>
+        <div class="help-text">Selecione uma cidade e clique em Adicionar. Para cada cidade, escolha os tipos de alerta desejados.</div>
+        <div id="cityBlocks"></div>
         <div id="errorMsg" class="error"></div>
-
         <button type="submit">Enviar</button>
     </form>
-
     <script>
+        const cityBlocks = {};
+        document.getElementById('addCityBtn').addEventListener('click', function() {
+            const select = document.getElementById('cidadeSelect');
+            const city = select.value;
+            if (!city || cityBlocks[city]) return;
+            // Cria bloco
+            const block = document.createElement('div');
+            block.className = 'city-block';
+            block.id = `block-${city}`;
+            block.innerHTML = `
+                <strong>${city}</strong>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" value="Temperatura"> Temperatura</label>
+                    <label><input type="checkbox" value="Umidade"> Umidade</label>
+                </div>
+                <button type="button" class="remove-btn" onclick="removeCityBlock('${city}')">Remover</button>
+            `;
+            document.getElementById('cityBlocks').appendChild(block);
+            cityBlocks[city] = block;
+        });
+        window.removeCityBlock = function(city) {
+            const block = cityBlocks[city];
+            if (block) {
+                block.remove();
+                delete cityBlocks[city];
+            }
+        }
         document.getElementById('alertForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const nome = document.getElementById('nome').value.trim();
             const email = document.getElementById('email').value.trim();
-            const cidades = Array.from(document.getElementById('cidade').selectedOptions).map(opt => opt.value);
-            const alertas = document.querySelectorAll('input[name="alerta"]:checked');
             const errorMsg = document.getElementById('errorMsg');
             errorMsg.textContent = "";
-
             if (!nome) {
                 errorMsg.textContent = "Nome é obrigatório.";
                 return;
             }
-
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 errorMsg.textContent = "Insira um email válido.";
                 return;
             }
-
-            if (alertas.length === 0) {
-                errorMsg.textContent = "Selecione pelo menos um tipo de alerta.";
+            const blocks = document.querySelectorAll('.city-block');
+            if (blocks.length === 0) {
+                errorMsg.textContent = "Adicione pelo menos uma cidade.";
                 return;
             }
-
-            if (cidades.length === 0) {
-                errorMsg.textContent = "Selecione pelo menos uma cidade.";
+            const cidades = [];
+            const alert_types = [];
+            let valid = true;
+            blocks.forEach(block => {
+                const city = block.querySelector('strong').textContent;
+                const types = Array.from(block.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+                if (types.length === 0) {
+                    valid = false;
+                }
+                cidades.push(city);
+                alert_types.push(types);
+            });
+            if (!valid) {
+                errorMsg.textContent = "Selecione pelo menos um tipo de alerta para cada cidade.";
                 return;
             }
-
             try {
-                const alertasArray = Array.from(alertas).map(cb => cb.value);
-                // Usar a URL atual para determinar o endereço do servidor
                 const currentUrl = window.location.origin;
                 const res = await fetch(`${currentUrl}/users`, {
                     method: 'POST',
@@ -211,26 +240,25 @@ class Form:
                     body: JSON.stringify({
                         username: nome,
                         email: email,
-                        cities: cidades,  
-                        alert_types: alertasArray
+                        cities: cidades,
+                        alert_types: alert_types
                     })
                 });
-
                 const data = await res.json();
-                
-                if (res.status === 201) { 
+                if (res.status === 201) {
                     alert('Usuário cadastrado com sucesso!');
                     document.getElementById('alertForm').reset();
+                    document.getElementById('cityBlocks').innerHTML = '';
+                    for (const key in cityBlocks) delete cityBlocks[key];
                 } else {
-                    errorMsg.textContent = 'Erro ao cadastrar usuário, usuário ';
+                    errorMsg.textContent = 'Erro ao cadastrar usuário.';
                 }
             } catch (err) {
-                console.error(err); 
+                console.error(err);
                 errorMsg.textContent = 'Erro na comunicação com o servidor.';
             }
         });
     </script>
-
 </body>
 
 </html>

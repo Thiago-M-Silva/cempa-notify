@@ -1,7 +1,6 @@
 from flask import Blueprint, render_template_string, request, jsonify, make_response
 from .services import UserService, AlertService
 from .form import Form
-from .models import AlertType 
 
 """
 Rotas de API para gerenciamento de usuários e alertas
@@ -97,13 +96,13 @@ def get_users():
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
-@bp.route('/users/<int:id>', methods=['DELETE'])
+@bp.route('/users/delete/<int:id>', methods=['GET'])
 def delete_user(id):
     try:
         success = UserService.delete(id)
         if success:
-            return make_response(jsonify({'message': 'user deleted'}), 200)
-        return make_response(jsonify({'error': 'user not found'}), 404)
+            return make_response(jsonify({'message': 'Usuário descastrado com sucesso.'}), 200)
+        return make_response(jsonify({'error': 'Usuário não encontrado'}), 404)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
