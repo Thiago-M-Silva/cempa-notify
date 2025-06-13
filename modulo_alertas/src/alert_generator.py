@@ -429,7 +429,6 @@ class AlertGenerator:
                                 
                                 # Enviar email para o usuário específico
                                 self.email_sender.enviar_email([user.email], email_content, subject)
-                                print(f"Email de alerta de temperatura enviado para {user.email} (ID: {user.id}) em {city}")
                                 alerts_sent += 1
                             except Exception as e:
                                 print(f"Erro ao enviar email de alerta de temperatura para {user.email} em {city}: {str(e)}")
@@ -470,7 +469,6 @@ class AlertGenerator:
                                 
                                 # Enviar email para o usuário específico
                                 self.email_sender.enviar_email([user.email], email_content, subject)
-                                print(f"Email de alerta de umidade baixa enviado para {user.email} (ID: {user.id}) em {city}")
                                 alerts_sent += 1
                             except Exception as e:
                                 print(f"Erro ao enviar email de alerta de umidade baixa para {user.email} em {city}: {str(e)}")
@@ -529,12 +527,10 @@ class AlertGenerator:
         
         return summary
 
-
-
-# forceDate = datetime(2025, 4, 29, 0, 0, 0)
-forceDate = None
-
 if __name__ == "__main__":
+    import time
+    start_time = time.time()
+    
     # Obter o diretório atual onde o script está sendo executado
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -544,7 +540,7 @@ if __name__ == "__main__":
     print(f"Usando arquivo de configuração: {config_path}")
 
     # Gerar o nome do arquivo de meteograma com base na data atual
-    today = forceDate if forceDate else datetime.now()
+    today = datetime.now()
     meteogram_filename = f"HST{today.year}{today.month:02d}{today.day:02d}00-MeteogramASC.out"
     
     meteogramPathDir = os.path.abspath(os.path.join(current_dir, '../../', 'tmp_files'))
@@ -602,3 +598,7 @@ if __name__ == "__main__":
             print(f"ERRO FATAL: {str(e)}")
             print("Ocorreu um erro inesperado durante o processamento.")
             sys.exit(1)
+        finally:
+            end_time = time.time()
+            execution_time = end_time - start_time
+            print(f"\nTempo total de execução: {execution_time:.2f} segundos")
