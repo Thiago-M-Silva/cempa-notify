@@ -1,5 +1,7 @@
 import os
 import sys
+import json  # Add json import at the top
+import html
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 from shared_config.config_parser import ConfigParser
 
@@ -19,22 +21,47 @@ class Form:
     # Gerando as opções de cidades dinamicamente a partir do config_map
     @staticmethod
     def generate_city_options():
-        options_html = ""
+        import json
+        import html
+        
+        # Começar com uma opção vazia
+        options_html = '            <option value="">Selecione uma cidade</option>\n'
         
         # Ordenar as cidades pelo nome de exibição para melhor apresentação
         city_display_names = []
+        city_configs = {}  # Armazenar configurações das cidades
+        
+        # Lista de chaves de temperatura mensal para verificar
+        temp_keys = [
+            'temp_max_jan', 'temp_max_feb', 'temp_max_mar', 'temp_max_apr',
+            'temp_max_may', 'temp_max_jun', 'temp_max_jul', 'temp_max_aug',
+            'temp_max_sep', 'temp_max_oct', 'temp_max_nov', 'temp_max_dec'
+        ]
         
         for polygon_name, config in config_map.items():
             display_name = config.get('display_name')
             if display_name:
                 city_display_names.append(display_name)
+                # Armazenar configuração da cidade
+                city_configs[display_name] = {
+                    'has_temperature': True,  # Começa como True, será False se encontrar algum 0
+                    'has_humidity': True  # Umidade sempre disponível
+                }
+                
+                # Verificar se qualquer threshold mensal é 0
+                for key in temp_keys:
+                    if config.get(key, 0) == 0:
+                        city_configs[display_name]['has_temperature'] = False
+                        break
         
         # Ordenar alfabeticamente
         city_display_names.sort()
         
         # Gerar as opções HTML
         for display_name in city_display_names:
-            options_html += f'            <option value="{display_name}">{display_name}</option>\n'
+            # Use json.dumps to properly serialize the config and escape it for HTML
+            config_json = html.escape(json.dumps(city_configs[display_name]))
+            options_html += f'            <option value="{html.escape(display_name)}" data-config="{config_json}">{html.escape(display_name)}</option>\n'
         
         return options_html
     
@@ -187,17 +214,30 @@ class Form:
         const cityBlocks = {};
         document.getElementById('addCityBtn').addEventListener('click', function() {
             const select = document.getElementById('cidadeSelect');
-            const city = select.value;
+            const option = select.options[select.selectedIndex];
+            const city = option.value;
+            const config = JSON.parse(option.getAttribute('data-config'));
+            
             if (!city || cityBlocks[city]) return;
+            
             // Cria bloco
             const block = document.createElement('div');
             block.className = 'city-block';
             block.id = `block-${city}`;
+            
+            // Gerar checkboxes baseado nas configurações da cidade
+            let checkboxes = '';
+            if (config.has_temperature) {
+                checkboxes += '<label><input type="checkbox" value="Temperatura"> Temperatura</label>';
+            }
+            if (config.has_humidity) {
+                checkboxes += '<label><input type="checkbox" value="Umidade"> Umidade</label>';
+            }
+            
             block.innerHTML = `
                 <strong>${city}</strong>
                 <div class="checkbox-group">
-                    <label><input type="checkbox" value="Temperatura"> Temperatura</label>
-                    <label><input type="checkbox" value="Umidade"> Umidade</label>
+                    ${checkboxes}
                 </div>
                 <button type="button" class="remove-btn" onclick="removeCityBlock('${city}')">Remover</button>
             `;
