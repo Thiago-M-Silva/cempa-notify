@@ -4,7 +4,7 @@ from datetime import datetime
 from meteogram_parser import MeteogramParser
 from sendEmail import EmailSender
 from generateMail import generate_temperature_alert_email, generate_humidity_alert_email
-from file_utils import clean_old_files
+from file_utils import clean_old_files, download_meteogram_file
 import sys
 import math
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
@@ -172,50 +172,7 @@ class AlertGenerator:
             error_msg = f"Erro ao carregar dados do meteograma: {str(e)}"
             print(f"ERRO: {error_msg}")
             raise Exception(error_msg) from e
-    
-    def to_dataframe(self):
-        """
-        Converte os dados do meteograma para um DataFrame.
-        
-        Returns:
-            pandas.DataFrame: DataFrame com os dados de todos os polígonos
-        """
-        if not self.meteogram_data:
-            self.load_meteogram_data()
-            if not self.meteogram_data:
-                return pd.DataFrame()
-        
-        all_data = []
-        
-        for polygon_name, time_data in self.meteogram_data.items():
-            display_name = self.config.get_display_name(polygon_name)
-            
-            for seconds, values in time_data.items():
-                # Criar uma cópia do dicionário de valores
-                row = values.copy()
-                
-                # Converter Tmax de Kelvin para Celsius se existir
-                if 'Tmax' in row:
-                    row['Tmax_K'] = row['Tmax']  # Preservar o valor original em Kelvin
-                    row['Tmax'] = self.kelvin_to_celsius(row['Tmax'])  # Converter para Celsius
-                
-                # Adicionar informações do polígono
-                row['polygon_name'] = polygon_name
-                row['display_name'] = display_name
-                row['seconds'] = seconds
-                
-                # Adicionar à lista de dados
-                all_data.append(row)
-        
-        # Criar DataFrame
-        df = pd.DataFrame(all_data)
-        
-        # Converter coluna 'date' para datetime se existir
-        if 'date' in df.columns:
-            df['date'] = pd.to_datetime(df['date'])
-        
-        return df
-    
+
     def check_temperature_alerts(self, date=None):
         """
         Verifica se há alertas de temperatura baseados nos limiares configurados.
@@ -249,8 +206,8 @@ class AlertGenerator:
             # Obter o limiar de temperatura para este mês
             threshold = self.config.get_monthly_temp_threshold(polygon_name, month)
             
-            if not threshold:
-                continue  # Pular se não tiver limiar configurado
+            if not threshold or threshold == 0:
+                continue  # Pular se não tiver limiar configurado ou se for 0
             
             # Verificar se o polígono existe nos dados do meteograma
             if polygon_name not in self.meteogram_data:
@@ -305,7 +262,7 @@ class AlertGenerator:
         """
         Verifica se há alertas de umidade baseados nos limiares especificados.
         Gera alertas apenas para umidade baixa (abaixo do limiar mínimo).
-        Calcula a umidade relativa a partir de Tmax e TDmax usando a fórmula de Magnus-Tetens.
+        Calcula a umidade relativa a partir de Tave e TDave usando a fórmula de Magnus-Tetens.
         
         Args:
             min_threshold (float): Limiar mínimo de umidade (%)
@@ -345,16 +302,13 @@ class AlertGenerator:
             
             for seconds, values in time_data.items():
                 # Verificar se temos os dados necessários para calcular a umidade relativa
-                if 'Tmax' in values and 'TDmax' in values:
+                if 'Tave' in values and 'TDave' in values:
                     # Converter para Celsius se estão em Kelvin
-                    t_max_celsius = self.kelvin_to_celsius(values['Tmax'])
-                    td_max_celsius = self.kelvin_to_celsius(values['TDmax'])
+                    t_ave_celsius = self.kelvin_to_celsius(values['Tave'])
+                    td_ave_celsius = self.kelvin_to_celsius(values['TDave'])
                     
                     # Calcular a umidade relativa
-                    humidity = self.calculate_relative_humidity(t_max_celsius, td_max_celsius)
-                    
-                    # Para depuração
-                    print(f"Cidade: {display_name}, Tmax: {t_max_celsius:.1f}°C, TDmax: {td_max_celsius:.1f}°C, Umidade calculada: {humidity:.1f}%")
+                    humidity = self.calculate_relative_humidity(t_ave_celsius, td_ave_celsius)
                     
                     # Atualizar a umidade mínima
                     if humidity < min_humidity:
@@ -366,8 +320,8 @@ class AlertGenerator:
                             'humidity': humidity,
                             'threshold': min_threshold,
                             'difference': humidity - min_threshold,
-                            'tmax': t_max_celsius,
-                            'tdmax': td_max_celsius
+                            'tave': t_ave_celsius,
+                            'tdave': td_ave_celsius
                         }
             
             # Verificar se há alertas de umidade baixa
@@ -382,9 +336,9 @@ class AlertGenerator:
                 }
                 
                 # Adicionar detalhes de temperatura se disponíveis
-                if 'tmax' in min_humidity_data and 'tdmax' in min_humidity_data:
-                    alerts[display_name]['humidity_low']['tmax'] = min_humidity_data['tmax']
-                    alerts[display_name]['humidity_low']['tdmax'] = min_humidity_data['tdmax']
+                if 'tave' in min_humidity_data and 'tdave' in min_humidity_data:
+                    alerts[display_name]['humidity_low']['tave'] = min_humidity_data['tave']
+                    alerts[display_name]['humidity_low']['tdave'] = min_humidity_data['tdave']
         
         # Filtrar apenas as cidades com alertas
         return {city: data for city, data in alerts.items() if data}
@@ -428,7 +382,7 @@ class AlertGenerator:
         
         return all_alerts
     
-    def send_email_alerts(self, email_recipients=None):
+    def send_email_alerts(self):
         """
         Envia alertas por email para os destinatários especificados.
         Se nenhum destinatário for fornecido, busca os destinatários usando o AlertService.
@@ -453,89 +407,80 @@ class AlertGenerator:
                 alert = city_alerts['temperature']
                 subject = f"ALERTA: Temperatura acima do limite em {city}"
                 
-                # Buscar destinatários específicos para este alerta
-                recipients = email_recipients
-                if not recipients and self.alert_service:
+                if self.alert_service:
                     try:
                         # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Temperatura"],
                             cities=[city]  # Usar o nome de exibição da cidade diretamente
                         )
-                        recipients = [user.email for user in users]
-                        print(f"Encontrados {len(recipients)} destinatários para alerta de temperatura em {city}")
+                        # Enviar email individual para cada usuário
+                        for user in users:
+                            try:
+                                # Gerar email personalizado para o usuário
+                                email_content = generate_temperature_alert_email(
+                                    city,
+                                    alert['value'],
+                                    alert['threshold'],
+                                    "°C",
+                                    user.id,
+                                    True
+                                )
+                                
+                                # Enviar email para o usuário específico
+                                self.email_sender.enviar_email([user.email], email_content, subject)
+                                alerts_sent += 1
+                            except Exception as e:
+                                print(f"Erro ao enviar email de alerta de temperatura para {user.email} em {city}: {str(e)}")
+                                continue
                     except Exception as e:
                         print(f"Erro ao buscar destinatários para {city}: {str(e)}")
                         continue
                 
-                if not recipients:
+                if not users:
                     print(f"Nenhum destinatário encontrado para alerta de temperatura em {city}")
                     continue
-                
-                email_content = generate_temperature_alert_email(
-                    city,
-                    alert['value'],
-                    alert['threshold'],
-                    "°C",
-                    f"Data/Hora: {alert['date']}",
-                    True,
-                    alert['difference']
-                )
-                
-                try:
-                    self.email_sender.enviar_email(recipients, email_content, subject)
-                    print(f"Email de alerta de temperatura enviado para {city} ({len(recipients)} destinatários)")
-                    alerts_sent += 1
-                except Exception as e:
-                    print(f"Erro ao enviar email de alerta de temperatura para {city}: {str(e)}")
-            
+
             # Alerta de umidade baixa
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
                 subject = f"ALERTA: Umidade abaixo do limite em {city}"
                 
-                # Buscar destinatários específicos para este alerta
-                recipients = email_recipients
-                if not recipients and self.alert_service:
+
+                if self.alert_service:
                     try:
                         # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Umidade"],
                             cities=[city]  # Usar o nome de exibição da cidade diretamente
                         )
-                        recipients = [user.email for user in users]
-                        print(f"Encontrados {len(recipients)} destinatários para alerta de umidade baixa em {city}")
+                        # Enviar email individual para cada usuário
+                        for user in users:
+                            try:                                
+                                # Gerar email personalizado para o usuário
+                                email_content = generate_humidity_alert_email(
+                                    city,
+                                    alert['value'],
+                                    alert['threshold'],
+                                    "%",
+                                    user.id,
+                                    False
+                                )
+                                
+                                # Enviar email para o usuário específico
+                                self.email_sender.enviar_email([user.email], email_content, subject)
+                                alerts_sent += 1
+                            except Exception as e:
+                                print(f"Erro ao enviar email de alerta de umidade baixa para {user.email} em {city}: {str(e)}")
+                                continue
                     except Exception as e:
                         print(f"Erro ao buscar destinatários para {city}: {str(e)}")
                         continue
                 
-                if not recipients:
+                if not users:
                     print(f"Nenhum destinatário encontrado para alerta de umidade baixa em {city}")
                     continue
                 
-                # Preparar informações adicionais para o email se disponíveis
-                additional_info = f"Data/Hora: {alert['date']}"
-                if 'tmax' in alert and 'tdmax' in alert:
-                    additional_info += f"\nTemperatura máxima: {alert['tmax']:.1f}°C"
-                    additional_info += f"\nTemperatura ponto de orvalho: {alert['tdmax']:.1f}°C"
-                    additional_info += f"\n(Umidade calculada pela fórmula de Magnus-Tetens)"
-                
-                email_content = generate_humidity_alert_email(
-                    city,
-                    alert['value'],
-                    alert['threshold'],
-                    "%",
-                    additional_info,
-                    False
-                )
-                
-                try:
-                    self.email_sender.enviar_email(recipients, email_content, subject)
-                    print(f"Email de alerta de umidade baixa enviado para {city} ({len(recipients)} destinatários)")
-                    alerts_sent += 1
-                except Exception as e:
-                    print(f"Erro ao enviar email de alerta de umidade baixa para {city}: {str(e)}")
-        
         return alerts_sent
     
     def get_alerts_summary(self):
@@ -564,6 +509,7 @@ class AlertGenerator:
                     
                 summary += f"    Limite: {alert['threshold']}°C\n"
                 summary += f"    Diferença: {alert['difference']:.1f}°C\n"
+                summary += f"    Segundos: {alert['seconds']}\n"
                 summary += f"    Data/Hora: {alert['date']}\n"
             
             if 'humidity_low' in city_alerts:
@@ -572,20 +518,19 @@ class AlertGenerator:
                 summary += f"    Diferença: {alert['difference']:.1f}%\n"
                 
                 # Adicionar informações de temperatura se disponíveis
-                if 'tmax' in alert and 'tdmax' in alert:
-                    summary += f"    Temperatura máxima (Tmax): {alert['tmax']:.1f}°C\n"
-                    summary += f"    Temperatura ponto de orvalho (TDmax): {alert['tdmax']:.1f}°C\n"
-                    summary += f"    (Umidade calculada pela fórmula de Magnus-Tetens)\n"
+                if 'tave' in alert and 'tdave' in alert:
+                    summary += f"    Temperatura máxima (Tave): {alert['tave']:.1f}°C\n"
+                    summary += f"    Temperatura ponto de orvalho (TDave): {alert['tdave']:.1f}°C\n"
                 
+                summary += f"    Segundos: {alert['seconds']}\n"
                 summary += f"    Data/Hora: {alert['date']}\n"
         
         return summary
 
-
-
-forceDate = datetime(2025, 4, 29, 0, 0, 0)
-
 if __name__ == "__main__":
+    import time
+    start_time = time.time()
+    
     # Obter o diretório atual onde o script está sendo executado
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -595,7 +540,7 @@ if __name__ == "__main__":
     print(f"Usando arquivo de configuração: {config_path}")
 
     # Gerar o nome do arquivo de meteograma com base na data atual
-    today = forceDate if forceDate else datetime.now()
+    today = datetime.now()
     meteogram_filename = f"HST{today.year}{today.month:02d}{today.day:02d}00-MeteogramASC.out"
     
     meteogramPathDir = os.path.abspath(os.path.join(current_dir, '../../', 'tmp_files'))
@@ -603,18 +548,27 @@ if __name__ == "__main__":
     
     print(f"Buscando arquivo de meteograma: {meteogramPath}")
 
-    # Descomentar quando fazer deploy
-    # clean_old_files(meteogramPathDir)
+    # Limpar arquivos antigos
+    clean_old_files(meteogramPathDir)
+    
+    # Baixar o arquivo de meteograma mais recente
+    downloaded_path = download_meteogram_file(
+        date=f"{today.year}{today.month:02d}{today.day:02d}",
+        directory=meteogramPathDir
+    )
+    
+    if not downloaded_path:
+        print("ERRO: Não foi possível baixar o arquivo de meteograma")
+        sys.exit(1)
     
     # Criar contexto de aplicação para usar o serviço
     app = create_app()
     
     with app.app_context():
-        print("Inicializando AlertGenerator com AlertService...")
         try:
             alert_gen = AlertGenerator(
                 config_path=config_path,
-                meteogram_path=meteogramPath,
+                meteogram_path=downloaded_path,  # Usar o caminho do arquivo baixado
                 alert_service=AlertService
                 )
             
@@ -644,3 +598,7 @@ if __name__ == "__main__":
             print(f"ERRO FATAL: {str(e)}")
             print("Ocorreu um erro inesperado durante o processamento.")
             sys.exit(1)
+        finally:
+            end_time = time.time()
+            execution_time = end_time - start_time
+            print(f"\nTempo total de execução: {execution_time:.2f} segundos")

@@ -1,15 +1,3 @@
-from datetime import datetime
-import locale
-
-# Try to set locale to Brazilian Portuguese for month names
-try:
-    locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-except:
-    try:
-        locale.setlocale(locale.LC_TIME, 'Portuguese_Brazil')
-    except:
-        print("Não foi possível configurar o locale para português do Brasil. Usando locale padrão.")
-
 # Níveis de alerta de umidade e recomendações
 HUMIDITY_ALERTS = {
     "atencao": {
@@ -43,6 +31,45 @@ HUMIDITY_ALERTS = {
             "Determinar a interrupção de qualquer atividade ao ar livre entre 10 e 16 horas como aulas de educação física, coleta de lixo, entrega de correspondência, etc.",
             "Determinar a suspensão de atividades que exijam aglomerações de pessoas em recintos fechados como aulas, cinemas, etc., entre 10 e 16 horas",
             "Durante as tardes, manter com umidade os ambientes internos, principalmente quarto de crianças, hospitais, etc."
+        ]
+    }
+}
+
+# Níveis de alerta de temperatura e recomendações
+TEMPERATURE_ALERTS = {
+    "atencao": {
+        "range": (3, 4.9),
+        "title": "Estado de Atenção",
+        "color": "#FF9800",  # Laranja
+        "recommendations": [
+            "Beba bastante água ao longo do dia",
+            "Prefira roupas leves e claras",
+            "Evite atividades físicas ao ar livre entre 10h e 16h",
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas"
+        ]
+    },
+    "alerta": {
+        "range": (5, 6.9),
+        "title": "Estado de Alerta",
+        "color": "#FF5722",  # Laranja escuro
+        "recommendations": [
+            "Reduza a exposição direta ao sol, principalmente nas horas mais quentes",
+            "Hidrate-se com maior frequência, mesmo sem sentir sede",
+            "Mantenha os ambientes bem ventilados",
+            "Evite refeições pesadas e bebidas alcoólicas",
+            "Esteja atento a sinais como tontura, dor de cabeça ou cansaço excessivo"
+        ]
+    },
+    "emergencia": {
+        "range": (7, 30),
+        "title": "Estado de Emergência",
+        "color": "#B71C1C",  # Vermelho escuro
+        "recommendations": [
+            "Fique em ambientes frescos e bem ventilados sempre que possível",
+            "Aumente a ingestão de água e evite sair ao ar livre durante o pico do calor",
+            "Use protetor solar e chapéus se precisar sair",
+            "Monitore familiares e vizinhos em situação de vulnerabilidade",
+            "Em caso de mal-estar intenso, procure atendimento médico imediatamente"
         ]
     }
 }
@@ -96,7 +123,56 @@ def generate_humidity_recommendations_html(humidity_value):
     
     return recommendations_html
 
-def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, localizacao, is_max=True, difference=0.0):
+def get_temperature_alert_level(difference):
+    """
+    Determina o nível de alerta com base na diferença de temperatura.
+    
+    Args:
+        difference (float): Diferença entre a temperatura atual e o limite
+        
+    Returns:
+        dict: Informações do nível de alerta ou None se abaixo dos níveis de alerta
+    """
+    for level_key, level_info in TEMPERATURE_ALERTS.items():
+        min_val, max_val = level_info["range"]
+        if min_val <= difference <= max_val:
+            return level_key, level_info
+    
+    return None, None
+
+def generate_temperature_recommendations_html(difference):
+    """
+    Gera o HTML com as recomendações baseadas na diferença de temperatura.
+    
+    Args:
+        difference (float): Diferença entre a temperatura atual e o limite
+        
+    Returns:
+        str: HTML com as recomendações ou string vazia se abaixo dos níveis de alerta
+    """
+    level_key, level_info = get_temperature_alert_level(difference)
+    
+    if not level_info:
+        return ""
+    
+    recommendations_html = f"""
+    <div style="margin-top: 20px; background-color: {level_info['color']}20; padding: 15px; border-left: 5px solid {level_info['color']}; border-radius: 3px;">
+        <h3 style="color: {level_info['color']}; margin-top: 0;">{level_info['title']}</h3>
+        <p><strong>Cuidados a serem tomados:</strong></p>
+        <ul>
+    """
+    
+    for rec in level_info['recommendations']:
+        recommendations_html += f"<li>{rec}</li>\n"
+    
+    recommendations_html += """
+        </ul>
+    </div>
+    """
+    
+    return recommendations_html
+
+def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, user_id, is_max=True):
     """
     Gera o conteúdo HTML para alertas de temperatura.
     
@@ -105,21 +181,21 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, locali
         valor (float): Valor da temperatura detectada
         threshold (float): Limiar de temperatura (máximo ou mínimo)
         unit (str): Unidade de medida (°C)
-        localizacao (str): Coordenadas da localização
+        user_id (uuid): ID do usuário
         is_max (bool): True se o alerta é para máxima, False se for mínima
         difference (float): Diferença entre o valor e o limite
     Returns:
         str: Conteúdo HTML formatado para o email
     """
-    now = datetime.now()
-    month_name = now.strftime("%B").capitalize()
     tipo_alerta = "acima" if is_max else "abaixo"
+
+    difference = valor - threshold
     
-    # Obter o dia da semana e o mês em português, se possível
-    try:
-        dia_semana = now.strftime("%A").capitalize()
-    except:
-        dia_semana = now.strftime("%A")
+    # Gerar recomendações baseadas na diferença de temperatura
+    # Só usamos as recomendações se for alerta de temperatura alta
+    recommendations_html = ""
+    if is_max and difference > 0:  # Só mostrar recomendações para temperatura acima do limite
+        recommendations_html = generate_temperature_recommendations_html(difference)
     
     alert_data = f"""
     <html>
@@ -129,12 +205,16 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, locali
         </div>
         <div style="padding: 20px;">
             <p><strong>Cidade:</strong> {cidade_nome}</p>
-            <p><strong>Valor:</strong> {valor:.1f}{unit} (limite: {threshold}{unit}, diferença do esperado: {difference:.1f}{unit})</p>
-            <p><strong>Data/Hora:</strong> {dia_semana}, {now.strftime("%d/%m/%Y %H:%M:%S")}</p>
-            <p><strong>Mês:</strong> {month_name}</p>
+            <p><strong>Temperatura:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
+            
+            {recommendations_html}
+            
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
             <p style="color: #777; font-size: 12px;">Este é um email automático do CEMPA.</p>
             <p style="color: #777; font-size: 12px;">Por favor, não responda a este email.</p>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="http://200.137.215.94:8081/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar-se</a>
+            </div>
         </div>
     </body>
     </html>
@@ -142,7 +222,7 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, locali
     
     return alert_data
 
-def generate_humidity_alert_email(cidade_nome, valor, threshold, unit, localizacao, is_max=True):
+def generate_humidity_alert_email(cidade_nome, valor, threshold, unit, user_id, is_max=True):
     """
     Gera o conteúdo HTML para alertas de umidade.
     
@@ -151,21 +231,13 @@ def generate_humidity_alert_email(cidade_nome, valor, threshold, unit, localizac
         valor (float): Valor da umidade detectada
         threshold (float): Limiar de umidade (máximo ou mínimo)
         unit (str): Unidade de medida (%)
-        localizacao (str): Coordenadas da localização
+        user_id (uuid): ID do usuário
         is_max (bool): True se o alerta é para máxima, False se for mínima
     
     Returns:
         str: Conteúdo HTML formatado para o email
     """
-    now = datetime.now()
-    month_name = now.strftime("%B").capitalize()
     tipo_alerta = "acima" if is_max else "abaixo"
-    
-    # Obter o dia da semana e o mês em português, se possível
-    try:
-        dia_semana = now.strftime("%A").capitalize()
-    except:
-        dia_semana = now.strftime("%A")
     
     # Gerar recomendações baseadas no valor da umidade
     # Só usamos as recomendações se for alerta de baixa umidade
@@ -181,15 +253,16 @@ def generate_humidity_alert_email(cidade_nome, valor, threshold, unit, localizac
         </div>
         <div style="padding: 20px;">
             <p><strong>Cidade:</strong> {cidade_nome}</p>
-            <p><strong>Valor:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
-            <p><strong>Data/Hora:</strong> {dia_semana}, {now.strftime("%d/%m/%Y %H:%M:%S")}</p>
-            <p><strong>Mês:</strong> {month_name}</p>
+            <p><strong>Umidade:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
             
             {recommendations_html}
             
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
             <p style="color: #777; font-size: 12px;">Este é um email automático do CEMPA.</p>
             <p style="color: #777; font-size: 12px;">Por favor, não responda a este email.</p>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="http://200.137.215.94:8081/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar-se</a>
+            </div>
         </div>
     </body>
     </html>

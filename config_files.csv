@@ -1,6 +1,251 @@
 polygon_name_meteogram,display_name,temp_max_jan,temp_max_feb,temp_max_mar,temp_max_apr,temp_max_may,temp_max_jun,temp_max_jul,temp_max_aug,temp_max_sep,temp_max_oct,temp_max_nov,temp_max_dec
-5730-RMG-Regiao_Metropolitana_de_Goiania,Goiânia,30.6,31,30.9,31.2,15,15,15,15,15,33.2,31.1,30.6
-5727-RN_Rio_Verde,Rio Verde,30.6,31,30.9,31.2,30.3,30,30.6,32.7,34,33.2,31.1,30.6
-5458-Trindade,Trindade,30.6,31,30.9,31.2,30.3,30,30.6,32.7,34,33.2,31.1,30.6
-0463-Anapolis,Anápolis,30.6,31,30.9,31.2,30.3,30,30.6,32.7,34,33.2,31.1,30.6
-2136-Goianapolis,Goianápolis,30.6,31,30.9,31.2,30.3,30,30.6,32.7,34,33.2,31.1,30.6
+5730-RMG-Regiao_Metropolitana_de_Goiania,Região Metropolitana de Goiânia,30.6,31.0,30.9,31.2,30.3,30.0,30.6,32.7,34.0,33.2,31.1,30.6
+5727-RN_Rio_Verde,Rio Verde Região Norte,0,0,0,0,0,0,0,0,0,0,0,0
+5728-RL_Rio_Verde,Rio Verde Região Leste,0,0,0,0,0,0,0,0,0,0,0,0
+5729-RS_Rio_Verde,Rio Verde Região Sul,0,0,0,0,0,0,0,0,0,0,0,0
+5773-Campo_Limpo_de_Goias,Campo Limpo de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1073-Cachoeira_de_Goias,Cachoeira de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+5673-Vila_Propicio,Vila Propício,0,0,0,0,0,0,0,0,0,0,0,0
+5664-Vila_Boa,Vila Boa,0,0,0,0,0,0,0,0,0,0,0,0
+5554-Uruana,Uruaçú,0,0,0,0,0,0,0,0,0,0,0,0
+5553-Uruacu,Uruaçu,0,0,0,0,0,0,0,0,0,0,0,0
+5524-Uirapuru,Uirapuru,0,0,0,0,0,0,0,0,0,0,0,0
+5600-Varjao,Várjão,0,0,0,0,0,0,0,0,0,0,0,0
+5500-Turvelandia,Turvelândia,0,0,0,0,0,0,0,0,0,0,0,0
+5499-Turvania,Turvânia,0,0,0,0,0,0,0,0,0,0,0,0
+5465-Trombas,Trombas,0,0,0,0,0,0,0,0,0,0,0,0
+5371-Teresina_de_Goias,Teresina de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+5329-Taquaral_de_Goias,Taquaral de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+5228-Sitio_d'Abadia,Sítio d'Abadia,0,0,0,0,0,0,0,0,0,0,0,0
+5586-Valparaiso_de_Goias,Valparaíso de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+5571-Urutai,Urutaí,0,0,0,0,0,0,0,0,0,0,0,0
+5220-Simolandia,Simolândia,0,0,0,0,0,0,0,0,0,0,0,0
+5209-Silvania,Silvânia,0,0,0,0,0,0,0,0,0,0,0,0
+5458-Trindade,Trindade,0,0,0,0,0,0,0,0,0,0,0,0
+5179-Serranopolis,Serranópolis,0,0,0,0,0,0,0,0,0,0,0,0
+5011-Sao_Miguel_do_Passa_Quatro,São Miguel do Passa Quatro,0,0,0,0,0,0,0,0,0,0,0,0
+5006-Sao_Miguel_do_Araguaia,São Miguel do Araguaia,0,0,0,0,0,0,0,0,0,0,0,0
+5647-Vianopolis,Vianópolis,0,0,0,0,0,0,0,0,0,0,0,0
+4861-Sao_Joao_da_Parauna,São João da Paraúna,0,0,0,0,0,0,0,0,0,0,0,0
+4867-Sao_Joao_d'Alianca,São João d'Aliança,0,0,0,0,0,0,0,0,0,0,0,0
+5651-Vicentinopolis,Vicentinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+4812-Sao_Francisco_de_Goias,São Francisco de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4782-Sao_Domingos,São Domingos,0,0,0,0,0,0,0,0,0,0,0,0
+4655-Santa_Terezinha_de_Goias,Santa Terezinha de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+5071-Sao_Simao,São Simão,0,0,0,0,0,0,0,0,0,0,0,0
+4984-Sao_Luiz_do_Norte,São Luiz do Norte,0,0,0,0,0,0,0,0,0,0,0,0
+4628-Santa_Rita_do_Novo_Destino,Santa Rita do Novo Destino,0,0,0,0,0,0,0,0,0,0,0,0
+4626-Santa_Rita_do_Araguaia,Santa Rita do Araguaia,0,0,0,0,0,0,0,0,0,0,0,0
+4649-Santa_Tereza_de_Goias,Santa Tereza de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4977-Sao_Luis_de_Montes_Belos,São Luís de Montes Belos,0,0,0,0,0,0,0,0,0,0,0,0
+4577-Santa_Isabel,Santa Isabel,0,0,0,0,0,0,0,0,0,0,0,0
+4571-Santa_Helena_de_Goias,Santa Helena de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4415-Rio_Quente,Rio Quente,0,0,0,0,0,0,0,0,0,0,0,0
+4335-Rianapolis,Rianápolis,0,0,0,0,0,0,0,0,0,0,0,0
+4334-Rialma,Rialma,0,0,0,0,0,0,0,0,0,0,0,0
+4263-Quirinopolis,Quirinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+4120-Porteirao,Porteirão,0,0,0,0,0,0,0,0,0,0,0,0
+4115-Porangatu,Porangatu,0,0,0,0,0,0,0,0,0,0,0,0
+5374-Terezopolis_de_Goias,Terezópolis de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4559-Santa_Fe_de_Goias,Santa Fé de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4224-Professor_Jamil,Professor Jamil,0,0,0,0,0,0,0,0,0,0,0,0
+4160-Posse,Posse,29.7,29.7,29.7,30,29.7,29,29,30.6,32.5,32.4,29.9,29.6
+4095-Pontalina,Pontalina,0,0,0,0,0,0,0,0,0,0,0,0
+4511-Sanclerlandia,Sanclerlândia,0,0,0,0,0,0,0,0,0,0,0,0
+4461-Rubiataba,Rubiataba,0,0,0,0,0,0,0,0,0,0,0,0
+5128-Senador_Canedo,Senador Canedo,0,0,0,0,0,0,0,0,0,0,0,0
+4054-Planaltina,Planaltina,0,0,0,0,0,0,0,0,0,0,0,0
+4038-Pires_do_Rio,Pires do Rio,0,0,0,0,0,0,0,0,0,0,0,0
+5452-Tres_Ranchos,Três Ranchos,0,0,0,0,0,0,0,0,0,0,0,0
+4023-Piranhas,Piranhas,0,0,0,0,0,0,0,0,0,0,0,0
+4007-Piracanjuba,Piracanjuba,0,0,0,0,0,0,0,0,0,0,0,0
+4124-Portelandia,Portelândia,0,0,0,0,0,0,0,0,0,0,0,0
+5018-Sao_Patricio,São Patrício,0,0,0,0,0,0,0,0,0,0,0,0
+4712-Santo_Antonio_de_Goias,Santo Antônio de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3966-Pilar_de_Goias,Pilar de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4037-Pirenopolis,Pirenópolis,30,30.4,30.4,30.9,30.5,30.1,30.6,32.5,33.7,32.9,30.5,30
+3938-Perolandia,Perolândia,0,0,0,0,0,0,0,0,0,0,0,0
+4721-Santo_Antonio_do_Descoberto,Santo Antônio do Descoberto,0,0,0,0,0,0,0,0,0,0,0,0
+4708-Santo_Antonio_da_Barra,Santo Antônio da Barra,0,0,0,0,0,0,0,0,0,0,0,0
+3793-Parauna,Paraúna,0,0,0,0,0,0,0,0,0,0,0,0
+3730-Palmeiras_de_Goias,Palmeiras de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3708-Palestina_de_Goias,Palestina de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3741-Panama,Panamá,0,0,0,0,0,0,0,0,0,0,0,0
+3692-Padre_Bernardo,Padre Bernardo,0,0,0,0,0,0,0,0,0,0,0,0
+3682-Ouvidor,Ouvidor,0,0,0,0,0,0,0,0,0,0,0,0
+3677-Ouro_Verde_de_Goias,Ouro Verde de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3649-Orizona,Orizona,0,0,0,0,0,0,0,0,0,0,0,0
+3606-Novo_Planalto,Novo Planalto,0,0,0,0,0,0,0,0,0,0,0,0
+3577-Nova_Veneza,Nova Veneza,0,0,0,0,0,0,0,0,0,0,0,0
+3560-Nova_Roma,Nova Roma,0,0,0,0,0,0,0,0,0,0,0,0
+3524-Nova_Iguacu_de_Goias,Nova Iguaçu de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3504-Nova_Crixas,Nova Crixás,0,0,0,0,0,0,0,0,0,0,0,0
+3462-Niquelandia,Niquelândia,0,0,0,0,0,0,0,0,0,0,0,0
+3517-Nova_Gloria,Nova Glória,0,0,0,0,0,0,0,0,0,0,0,0
+3487-Nova_Aurora,Nova Aurora,0,0,0,0,0,0,0,0,0,0,0,0
+3451-Neropolis,Nerópolis,0,0,0,0,0,0,0,0,0,0,0,0
+3448-Nazario,Nazário,0,0,0,0,0,0,0,0,0,0,0,0
+3425-Mutunopolis,Mutunópolis,0,0,0,0,0,0,0,0,0,0,0,0
+3483-Nova_America,Nova América,0,0,0,0,0,0,0,0,0,0,0,0
+3408-Mundo_Novo,Mundo Novo,0,0,0,0,0,0,0,0,0,0,0,0
+3394-Mozarlandia,Mozarlândia,0,0,0,0,0,0,0,0,0,0,0,0
+3373-Morrinhos,Morrinhos,0,0,0,0,0,0,0,0,0,0,0,0
+3362-Montividiu_do_Norte,Montividiu do Norte,0,0,0,0,0,0,0,0,0,0,0,0
+3361-Montividiu,Montividiu,0,0,0,0,0,0,0,0,0,0,0,0
+3359-Montes_Claros_de_Goias,Montes Claros de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3390-Mossamedes,Mossâmedes,0,0,0,0,0,0,0,0,0,0,0,0
+3376-Morro_Agudo_de_Goias,Morro Agudo de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3327-Monte_Alegre_de_Goias,Monte Alegre de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3260-Minacu,Minaçu,0,0,0,0,0,0,0,0,0,0,0,0
+3258-Mimoso_de_Goias,Mimoso de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+4545-Santa_Cruz_de_Goias,Santa Cruz de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3304-Moipora,Moiçorá,0,0,0,0,0,0,0,0,0,0,0,0
+3224-Maurilandia,Maurilândia,0,0,0,0,0,0,0,0,0,0,0,0
+3216-Matrincha,Matrinchã,0,0,0,0,0,0,0,0,0,0,0,0
+3777-Paranaiguara,Paranaiguara,0,0,0,0,0,0,0,0,0,0,0,0
+3105-Mara_Rosa,Mara Rosa,0,0,0,0,0,0,0,0,0,0,0,0
+3074-Mambai,Mambaí,0,0,0,0,0,0,0,0,0,0,0,0
+3061-Mairipotaba,Mairipotaba,0,0,0,0,0,0,0,0,0,0,0,0
+3022-Luziania,Luziânia,0,0,0,0,0,0,0,0,0,0,0,0
+5776-Lagoa_Santa,Lagoa Santa,0,0,0,0,0,0,0,0,0,0,0,0
+2861-Jussara,Jussara,0,0,0,0,0,0,0,0,0,0,0,0
+3181-Marzagao,Marzagão,0,0,0,0,0,0,0,0,0,0,0,0
+2755-Jatai,Jataí,30.7,30.9,30.9,30.6,29,29.2,29.9,32.1,33.4,32.6,31.2,30.8
+2716-Jandaia,Jandaia,0,0,0,0,0,0,0,0,0,0,0,0
+2664-Ivolandia,Ivolândia,0,0,0,0,0,0,0,0,0,0,0,0
+2738-Jaragua,Jaraguá,0,0,0,0,0,0,0,0,0,0,0,0
+2649-Itumbiara,Itumbiara,0,0,0,0,0,0,0,0,0,0,0,0
+2630-Itaucu,Itauçu,0,0,0,0,0,0,0,0,0,0,0,0
+2617-Itaruma,Itarumã,0,0,0,0,0,0,0,0,0,0,0,0
+2765-Jaupaci,Jaupaci,0,0,0,0,0,0,0,0,0,0,0,0
+3945-Petrolina_de_Goias,Petrolina de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+2606-Itapuranga,Itapuranga,0,0,0,0,0,0,0,0,0,0,0,0
+2589-Itapirapua,Itapirapuã,0,0,0,0,0,0,0,0,0,0,0,0
+2564-Itapaci,Itapaci,0,0,0,0,0,0,0,0,0,0,0,0
+2534-Itaja,Itajá,0,0,0,0,0,0,0,0,0,0,0,0
+2966-Leopoldo_de_Bulhoes,Leopoldo de Bulhões,0,0,0,0,0,0,0,0,0,0,0,0
+2819-Joviania,Joviânia,0,0,0,0,0,0,0,0,0,0,0,0
+2520-Itaguari,Itaguari,0,0,0,0,0,0,0,0,0,0,0,0
+2497-Itaberai,Itaberaí,0,0,0,0,0,0,0,0,0,0,0,0
+2488-Israelandia,Israelândia,0,0,0,0,0,0,0,0,0,0,0,0
+5775-Ipiranga_de_Goias,Ipiranga de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+2428-Ipameri,Ipameri,29.7,30.1,29.7,29.5,28.1,27.6,28.0,30.0,31.6,31.8,29.9,29.8
+2782-Jesupolis,Jesúpolis,0,0,0,0,0,0,0,0,0,0,0,0
+2409-Indiara,Indiara,0,0,0,0,0,0,0,0,0,0,0,0
+2396-Inaciolandia,Inaciolândia,0,0,0,0,0,0,0,0,0,0,0,0
+2285-Iaciara,Iaciara,0,0,0,0,0,0,0,0,0,0,0,0
+3587-Novo_Brasil,Novo Brasil,0,0,0,0,0,0,0,0,0,0,0,0
+2450-Ipora,Iporá,0,0,0,0,0,0,0,0,0,0,0,0
+2273-Hidrolina,Hidrolina,0,0,0,0,0,0,0,0,0,0,0,0
+2272-Hidrolandia,Hidrolândia,0,0,0,0,0,0,0,0,0,0,0,0
+2207-Guapo,Guapó,0,0,0,0,0,0,0,0,0,0,0,0
+2153-Gouvelandia,Gouvelândia,0,0,0,0,0,0,0,0,0,0,0,0
+2145-Goiatuba,Goiatuba,0,0,0,0,0,0,0,0,0,0,0,0
+2226-Guarani_de_Goias,Guarani de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3734-Palminopolis,Palminópolis,0,0,0,0,0,0,0,0,0,0,0,0
+2143-Goias,Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+2244-Guarinos,Guarinos,0,0,0,0,0,0,0,0,0,0,0,0
+2041-Formoso,Formoso,0,0,0,0,0,0,0,0,0,0,0,0
+2018-Flores_de_Goias,Flores de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3733-Palmelo,Palmelo,0,0,0,0,0,0,0,0,0,0,0,0
+2138-Goianesia,Goianésia,0,0,0,0,0,0,0,0,0,0,0,0
+2008-Firminopolis,Firminópolis,0,0,0,0,0,0,0,0,0,0,0,0
+1971-Fazenda_Nova,Fazenda Nova,0,0,0,0,0,0,0,0,0,0,0,0
+0230-Goiania,Goiânia,30.6,31.0,30.9,31.2,30.3,18,30.6,32.7,34.0,33.2,31.1,30.6
+1955-Faina,Faina,0,0,0,0,0,0,0,0,0,0,0,0
+5774-Gameleira_de_Goias,Gameleira de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1847-Doverlandia,Doverlândia,0,0,0,0,0,0,0,0,0,0,0,0
+2137-Goiandira,Goiandira,0,0,0,0,0,0,0,0,0,0,0,0
+2220-Guaraita,Guaraíta,0,0,0,0,0,0,0,0,0,0,0,0
+1938-Estrela_do_Norte,Estrela do Norte,0,0,0,0,0,0,0,0,0,0,0,0
+1860-Edeia,Edéia,0,0,0,0,0,0,0,0,0,0,0,0
+1793-Divinopolis_de_Goias,Divinópolis de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1782-Diorama,Diorama,0,0,0,0,0,0,0,0,0,0,0,0
+1692-Crominia,Cromínia,0,0,0,0,0,0,0,0,0,0,0,0
+1689-Crixas,Crixás,0,0,0,0,0,0,0,0,0,0,0,0
+1746-Damolandia,Damolândia,0,0,0,0,0,0,0,0,0,0,0,0
+1744-Damianopolis,Damianópolis,0,0,0,0,0,0,0,0,0,0,0,0
+1716-Cumari,Cumari,0,0,0,0,0,0,0,0,0,0,0,0
+1647-Corumbaiba,Corumbaíba,0,0,0,0,0,0,0,0,0,0,0,0
+1646-Corumba_de_Goias,Corumbá de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1637-Corrego_do_Ouro,Córrego do Ouro,0,0,0,0,0,0,0,0,0,0,0,0
+1532-Colinas_do_Sul,Colinas do Sul,0,0,0,0,0,0,0,0,0,0,0,0
+1451-Ceres,Ceres,0,0,0,0,0,0,0,0,0,0,0,0
+1427-Cavalcante,Cavalcante,0,0,0,0,0,0,0,0,0,0,0,0
+2141-Goianira,Goianira,0,0,0,0,0,0,0,0,0,0,0,0
+1518-Cocalzinho_de_Goias,Cocalzinho de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1859-Edealina,Edealina,0,0,0,0,0,0,0,0,0,0,0,0
+1476-Chapadao_do_Ceu,Chapadão do Céu,0,0,0,0,0,0,0,0,0,0,0,0
+2264-Heitorai,Heitoraí,0,0,0,0,0,0,0,0,0,0,0,0
+1216-Campos_Belos,Campos Belos,0,0,0,0,0,0,0,0,0,0,0,0
+1188-Campo_Alegre_de_Goias,Campo Alegre de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1752-Davinopolis,Davinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+1464-Cezarina,Cezarina,0,0,0,0,0,0,0,0,0,0,0,0
+1422-Caturai,Caturaí,0,0,0,0,0,0,0,0,0,0,0,0
+2422-Inhumas,Inhumas,0,0,0,0,0,0,0,0,0,0,0,0
+1360-Carmo_do_Rio_Verde,Carmo do Rio Verde,0,0,0,0,0,0,0,0,0,0,0,0
+1399-Castelandia,Castelândia,0,0,0,0,0,0,0,0,0,0,0,0
+1180-Campinacu,Campinaçu,0,0,0,0,0,0,0,0,0,0,0,0
+1138-Caldas_Novas,Caldas Novas,0,0,0,0,0,0,0,0,0,0,0,0
+1185-Campinorte,Campinorte,0,0,0,0,0,0,0,0,0,0,0,0
+1096-Cacu,Caçu,0,0,0,0,0,0,0,0,0,0,0,0
+1080-Cachoeira_Dourada,Cachoeira Dourada,0,0,0,0,0,0,0,0,0,0,0,0
+1071-Cachoeira_Alta,Cachoeira Alta,0,0,0,0,0,0,0,0,0,0,0,0
+1034-Buriti_de_Goias,Buriti de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1032-Buriti_Alegre,Buriti Alegre,0,0,0,0,0,0,0,0,0,0,0,0
+1012-Britania,Britânia,0,0,0,0,0,0,0,0,0,0,0,0
+0952-Bonopolis,Bonópolis,0,0,0,0,0,0,0,0,0,0,0,0
+0917-Bom_Jesus_de_Goias,Bom Jesus de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+0906-Bom_Jardim_de_Goias,Bom Jardim de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1226-Campos_Verdes,Campos Verdes,0,0,0,0,0,0,0,0,0,0,0,0
+0812-Bela_Vista_de_Goias,Bela Vista de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1054-Cabeceiras,Cabeceiras,0,0,0,0,0,0,0,0,0,0,0,0
+0643-Aruana,Aruanã,0,0,0,0,0,0,0,0,0,0,0,0
+1139-Caldazinha,Caldazinha,0,0,0,0,0,0,0,0,0,0,0,0
+0790-Barro_Alto,Barro Alto,0,0,0,0,0,0,0,0,0,0,0,0
+0706-Baliza,Baliza,0,0,0,0,0,0,0,0,0,0,0,0
+0673-Aurilandia,Aurilândia,0,0,0,0,0,0,0,0,0,0,0,0
+1684-Cristianopolis,Cristianópolis,0,0,0,0,0,0,0,0,0,0,0,0
+0619-Arenopolis,Arenópolis,0,0,0,0,0,0,0,0,0,0,0,0
+2521-Itaguaru,Itaguaru,0,0,0,0,0,0,0,0,0,0,0,0
+0562-Araguapaz,Araguapaz,0,0,0,0,0,0,0,0,0,0,0,0
+0528-Apore,Apore,0,0,0,0,0,0,0,0,0,0,0,0
+1039-Buritinopolis,Buritinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+0448-Amorinopolis,Amorinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+0435-Amaralina,Amaralina,0,0,0,0,0,0,0,0,0,0,0,0
+0492-Anicuns,Anicuns,0,0,0,0,0,0,0,0,0,0,0,0
+0550-Aracu,Araçu,0,0,0,0,0,0,0,0,0,0,0,0
+0425-Alvorada_do_Norte,Alvorada do Norte,0,0,0,0,0,0,0,0,0,0,0,0
+0463-Anapolis,Anápolis,0,0,0,0,0,0,0,0,0,0,0,0
+0443-Americano_do_Brasil,Americano do Brasil,0,0,0,0,0,0,0,0,0,0,0,0
+0404-Alto_Paraiso_de_Goias,Alto Paraíso de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+0399-Alto_Horizonte,Alto Horizonte,0,0,0,0,0,0,0,0,0,0,0,0
+1171-Campestre_de_Goias,Campestre de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+0371-Aloandia,Aloândia,0,0,0,0,0,0,0,0,0,0,0,0
+0684-Avelinopolis,Avelinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+0303-Agua_Fria_de_Goias,Água Fria de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+0355-Alexania,Alexânia,0,0,0,0,0,0,0,0,0,0,0,0
+0304-Agua_Limpa,Água Limpa,0,0,0,0,0,0,0,0,0,0,0,0
+0277-Adelandia,Adelândia,0,0,0,0,0,0,0,0,0,0,0,0
+0273-Acreuna,Acreúna,0,0,0,0,0,0,0,0,0,0,0,0
+0249-Abadiania,Abadiânia,0,0,0,0,0,0,0,0,0,0,0,0
+0515-Aparecida_de_Goiania,Aparecida de Goiânia,0,0,0,0,0,0,0,0,0,0,0,0
+0553-Aragoiania,Aragoiânia,0,0,0,0,0,0,0,0,0,0,0,0
+0552-Aragarcas,Aragarças,31.9,32.1,32.5,33,32.5,32.5,33.1,35.4,36.5,35.4,33,32.2
+4636-Santa_Rosa_de_Goias,Santa Rosa de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+3590-Novo_Gama,Novo Gama,0,0,0,0,0,0,0,0,0,0,0,0
+2036-Formosa,Formosa,28.3,28.6,28.4,28.3,27.7,27,27.1,28.9,30.8,30.8,28.3,28.1
+0992-Brazabrantes,Brazabrantes,0,0,0,0,0,0,0,0,0,0,0,0
+1111-Caiaponia,Caiapônia,0,0,0,0,0,0,0,0,0,0,0,0
+0318-Aguas_Lindas_de_Goias,Águas Lindas de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+0489-Anhanguera,Anhanguera,0,0,0,0,0,0,0,0,0,0,0,0
+4521-Santa_Barbara_de_Goias,Santa Bárbara de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+2136-Goianapolis,Goianápolis,0,0,0,0,0,0,0,0,0,0,0,0
+0943-Bonfinopolis,Bonfinópolis,0,0,0,0,0,0,0,0,0,0,0,0
+3265-Mineiros,Mineiros,0,0,0,0,0,0,0,0,0,0,0,0
+4420-Rio_Verde,Rio Verde,0,0,0,0,0,0,0,0,0,0,0,0
+0516-Aparecida_do_Rio_Doce,Aparecida do Rio Doce,0,0,0,0,0,0,0,0,0,0,0,0
+0247-Abadia_de_Goias,Abadia de Goiás,0,0,0,0,0,0,0,0,0,0,0,0
+1499-Cidade_Ocidental,Cidade Ocidental,0,0,0,0,0,0,0,0,0,0,0,0
+1682-Cristalina,Cristalina,0,0,0,0,0,0,0,0,0,0,0,0
+1406-Catalao,Catalão,29.5,29.8,29.6,29.2,27.8,27.4,27.8,29.8,31.4,31.4,29.6,29.5

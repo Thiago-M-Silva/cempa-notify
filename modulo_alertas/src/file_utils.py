@@ -217,3 +217,50 @@ def remove_nc_files(directory=pathFiles):
     print(f"\nLimpeza concluída. {deleted_count} arquivos .nc removidos, liberando {freed_space_mb:.2f} MB de espaço.")
     
     return deleted_count, freed_space
+
+def download_meteogram_file(date=None, directory=pathFiles):
+    """
+    Baixa arquivo Meteogram do servidor CEMPA para uma data específica.
+    Verifica se o arquivo já existe antes de baixar.
+    
+    Args:
+        date (str, optional): Data no formato YYYYMMDD. Se None, usa a data atual.
+        directory (str, optional): Diretório onde o arquivo será salvo. 
+                                 Se None, usa o diretório padrão (pathFiles).
+        
+    Returns:
+        str: Caminho do arquivo baixado ou None se não foi possível baixar
+    """
+    if date is None:
+        date = datetime.datetime.now().strftime("%Y%m%d")
+    
+    # Construir o nome do arquivo no formato HSTYYYYMMDD00-MeteogramASC.out
+    filename = f"HST{date}00-MeteogramASC.out"
+    base_url = "https://tatu.cempa.ufg.br/HST_Meteogramas/"
+    file_url = urljoin(base_url, filename)
+    
+    # Criar o diretório se não existir
+    os.makedirs(directory, exist_ok=True)
+    
+    file_path = os.path.join(directory, filename)
+    
+    # Verificar se o arquivo já existe
+    if os.path.exists(file_path):
+        print(f"Arquivo Meteogram para {date} já existe: {file_path}")
+        return file_path
+    
+    try:
+        print(f"\nBaixando arquivo Meteogram para {date}...")
+        print(f"URL: {file_url}")
+        
+        # Baixar o arquivo
+        download_file(file_url, file_path)
+        
+        print(f"Download concluído com sucesso!")
+        return file_path
+        
+    except requests.RequestException as e:
+        print(f"Erro ao baixar arquivo Meteogram para {date}: {e}")
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        return None
