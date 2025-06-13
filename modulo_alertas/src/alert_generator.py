@@ -382,7 +382,7 @@ class AlertGenerator:
         
         return all_alerts
     
-    def send_email_alerts(self, email_recipients=None):
+    def send_email_alerts(self):
         """
         Envia alertas por email para os destinatários especificados.
         Se nenhum destinatário for fornecido, busca os destinatários usando o AlertService.
@@ -407,89 +407,82 @@ class AlertGenerator:
                 alert = city_alerts['temperature']
                 subject = f"ALERTA: Temperatura acima do limite em {city}"
                 
-                # Buscar destinatários específicos para este alerta
-                recipients = email_recipients
-                if not recipients and self.alert_service:
+                if self.alert_service:
                     try:
                         # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Temperatura"],
                             cities=[city]  # Usar o nome de exibição da cidade diretamente
                         )
-                        recipients = [user.email for user in users]
-                        print(f"Encontrados {len(recipients)} destinatários para alerta de temperatura em {city}")
+                        # Enviar email individual para cada usuário
+                        for user in users:
+                            try:
+                                # Gerar email personalizado para o usuário
+                                email_content = generate_temperature_alert_email(
+                                    city,
+                                    alert['value'],
+                                    alert['threshold'],
+                                    "°C",
+                                    user.id,
+                                    True
+                                )
+                                
+                                # Enviar email para o usuário específico
+                                self.email_sender.enviar_email([user.email], email_content, subject)
+                                print(f"Email de alerta de temperatura enviado para {user.email} (ID: {user.id}) em {city}")
+                                alerts_sent += 1
+                            except Exception as e:
+                                print(f"Erro ao enviar email de alerta de temperatura para {user.email} em {city}: {str(e)}")
+                                continue
                     except Exception as e:
                         print(f"Erro ao buscar destinatários para {city}: {str(e)}")
                         continue
                 
-                if not recipients:
+                if not users:
                     print(f"Nenhum destinatário encontrado para alerta de temperatura em {city}")
                     continue
-                
-                email_content = generate_temperature_alert_email(
-                    city,
-                    alert['value'],
-                    alert['threshold'],
-                    "°C",
-                    f"Data/Hora: {alert['date']}",
-                    True,
-                    alert['difference']
-                )
-                
-                try:
-                    self.email_sender.enviar_email(recipients, email_content, subject)
-                    print(f"Email de alerta de temperatura enviado para {city} ({len(recipients)} destinatários)")
-                    alerts_sent += 1
-                except Exception as e:
-                    print(f"Erro ao enviar email de alerta de temperatura para {city}: {str(e)}")
-            
+
             # Alerta de umidade baixa
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
                 subject = f"ALERTA: Umidade abaixo do limite em {city}"
                 
-                # Buscar destinatários específicos para este alerta
-                recipients = email_recipients
-                if not recipients and self.alert_service:
+
+                if self.alert_service:
                     try:
                         # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Umidade"],
                             cities=[city]  # Usar o nome de exibição da cidade diretamente
                         )
-                        recipients = [user.email for user in users]
-                        print(f"Encontrados {len(recipients)} destinatários para alerta de umidade baixa em {city}")
+                        # Enviar email individual para cada usuário
+                        for user in users:
+                            try:                                
+                                # Gerar email personalizado para o usuário
+                                email_content = generate_humidity_alert_email(
+                                    city,
+                                    alert['value'],
+                                    alert['threshold'],
+                                    "%",
+                                    user.id,
+                                    False
+                                )
+                                
+                                # Enviar email para o usuário específico
+                                self.email_sender.enviar_email([user.email], email_content, subject)
+                                print(f"Email de alerta de umidade baixa enviado para {user.email} (ID: {user.id}) em {city}")
+                                alerts_sent += 1
+                            except Exception as e:
+                                print(f"Erro ao enviar email de alerta de umidade baixa para {user.email} em {city}: {str(e)}")
+                                continue
                     except Exception as e:
                         print(f"Erro ao buscar destinatários para {city}: {str(e)}")
                         continue
                 
-                if not recipients:
+                if not users:
                     print(f"Nenhum destinatário encontrado para alerta de umidade baixa em {city}")
                     continue
                 
-                # Preparar informações adicionais para o email se disponíveis
-                additional_info = f"Data/Hora: {alert['date']}"
-                if 'tmax' in alert and 'tdmax' in alert:
-                    additional_info += f"\nTemperatura máxima: {alert['tmax']:.1f}°C"
-                    additional_info += f"\nTemperatura ponto de orvalho: {alert['tdmax']:.1f}°C"
-                    additional_info += f"\n(Umidade calculada pela fórmula de Magnus-Tetens)"
-                
-                email_content = generate_humidity_alert_email(
-                    city,
-                    alert['value'],
-                    alert['threshold'],
-                    "%",
-                    additional_info,
-                    False
-                )
-                
-                try:
-                    self.email_sender.enviar_email(recipients, email_content, subject)
-                    print(f"Email de alerta de umidade baixa enviado para {city} ({len(recipients)} destinatários)")
-                    alerts_sent += 1
-                except Exception as e:
-                    print(f"Erro ao enviar email de alerta de umidade baixa para {city}: {str(e)}")
-        
         return alerts_sent
     
     def get_alerts_summary(self):
