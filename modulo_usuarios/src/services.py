@@ -1,7 +1,7 @@
-from .models import User
-from .models import Alert
+from .models import User, Alert
 from . import db
 from sqlalchemy.orm import joinedload
+import uuid
 
 """
 Metodos de controle de usuários e alertas
@@ -19,15 +19,15 @@ get_all
     retorna: lista de objetos User ou uma lista vazia em caso de erro
 
 delete
-    deleta um usuário pelo ID
+    deleta um usuário pelo UUID (string)
     parametros:
-        user_id: ID do usuário a ser deletado
+        user_id: UUID do usuário a ser deletado (string)
     retorna: True se o usuário foi deletado com sucesso, False caso contrário
 
 update
-    atualiza os dados de um usuário pelo ID
+    atualiza os dados de um usuário pelo UUID (string)
     parametros:
-        user_id: ID do usuário a ser atualizado
+        user_id: UUID do usuário a ser atualizado (string)
         data: dicionário com os novos dados do usuário
 
 get_users_by_alert_and_city
@@ -67,6 +67,13 @@ class UserService:
     @staticmethod
     def delete(user_id):
         try:
+            # Validate UUID format
+            try:
+                uuid.UUID(user_id)
+            except ValueError:
+                print(f"Invalid UUID format: {user_id}")
+                return False
+                
             user = User.query.get(user_id)
             if user:
                 db.session.delete(user)
@@ -80,6 +87,13 @@ class UserService:
     @staticmethod
     def update(user_id, data):
         try:
+            # Validate UUID format
+            try:
+                uuid.UUID(user_id)
+            except ValueError:
+                print(f"Invalid UUID format: {user_id}")
+                return None
+                
             user = User.query.get(user_id)
             if user:
                 for key, value in data.items():

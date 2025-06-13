@@ -181,7 +181,7 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, user_i
         valor (float): Valor da temperatura detectada
         threshold (float): Limiar de temperatura (máximo ou mínimo)
         unit (str): Unidade de medida (°C)
-        user_id (int): ID do usuário
+        user_id (uuid): ID do usuário
         is_max (bool): True se o alerta é para máxima, False se for mínima
         difference (float): Diferença entre o valor e o limite
     Returns:
@@ -231,7 +231,7 @@ def generate_humidity_alert_email(cidade_nome, valor, threshold, unit, user_id, 
         valor (float): Valor da umidade detectada
         threshold (float): Limiar de umidade (máximo ou mínimo)
         unit (str): Unidade de medida (%)
-        user_id (int): ID do usuário
+        user_id (uuid): ID do usuário
         is_max (bool): True se o alerta é para máxima, False se for mínima
     
     Returns:

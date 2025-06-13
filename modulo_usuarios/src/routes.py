@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template_string, request, jsonify, make_response
 from .services import UserService, AlertService
 from .form import Form
+import uuid
 
 """
 Rotas de API para gerenciamento de usuários e alertas
@@ -25,10 +26,10 @@ get_users
     busca todos os usuários cadastrados
 
 delete_user
-    deleta um usuário pelo ID
+    deleta um usuário pelo UUID (string)
     
 update_user
-    atualiza os dados de um usuário pelo ID
+    atualiza os dados de um usuário pelo UUID (string)
 """
 
 bp = Blueprint('routes', __name__)
@@ -96,7 +97,7 @@ def get_users():
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
-@bp.route('/users/delete/<int:id>', methods=['GET'])
+@bp.route('/users/delete/<string:id>', methods=['GET'])
 def delete_user(id):
     try:
         success = UserService.delete(id)
@@ -106,7 +107,7 @@ def delete_user(id):
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
-@bp.route('/users/<int:id>', methods=['PUT'])
+@bp.route('/users/<string:id>', methods=['PUT'])
 def update_user(id):
     try:
         user = UserService.update(id, request.get_json())
