@@ -64,8 +64,8 @@ def delete_user(id):
     try:
         success = UserService.delete(id)
         if success:
-            return make_response(jsonify({'message': 'Usuario descastrado com sucesso.'}), 200)
-        return make_response(jsonify({'error': 'Usuario não encontrado'}), 404)
+            return make_response(jsonify({'message': 'Usuario descadastrado com sucesso.'}), 200)
+        return make_response(jsonify({'error': 'Usuario nao encontrado'}), 404)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
