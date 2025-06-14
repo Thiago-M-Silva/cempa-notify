@@ -675,12 +675,13 @@ class AlertGenerator:
             'formatted': f"{hours:02d}:{minutes:02d}"
         }
 
-    def create_control_file(self, meteogram_filename):
+    def create_control_file(self, meteogram_filename, error=None):
         """
         Cria um arquivo de controle para indicar que o processamento do dia foi concluído.
         
         Args:
             meteogram_filename (str): Nome do arquivo de meteograma processado
+            error (str, optional): Mensagem de erro associada ao processamento
             
         Returns:
             str: Caminho do arquivo de controle criado
@@ -692,10 +693,12 @@ class AlertGenerator:
         control_filename = f"{os.path.splitext(meteogram_filename)[0]}.processed"
         control_path = os.path.join(meteogram_dir, control_filename)
         
-        # Criar arquivo de controle com timestamp
+        # Criar arquivo de controle com timestamp e mensagem de erro
         with open(control_path, 'w') as f:
             f.write(f"Processado em: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"Arquivo original: {meteogram_filename}\n")
+            if error:
+                f.write(f"Erro: {error}\n")
         
         print(f"Arquivo de controle criado: {control_path}")
         return control_path
@@ -769,19 +772,26 @@ if __name__ == "__main__":
                     alerts_enviados = alert_gen.send_email_alerts()
                     print(f"Enviados {alerts_enviados} alertas para os destinatários cadastrados")
                 
-                # Criar arquivo de controle para indicar que o processamento foi concluído
+                # Criar arquivo de controle para indicar que o processamento foi concluído com sucesso
                 alert_gen.create_control_file(meteogram_filename)
+                print("Processamento concluído com sucesso!")
             else:
-                print("Não foi possível carregar os dados do meteograma")
+                error_msg = "Não foi possível carregar os dados do meteograma"
+                print(error_msg)
+                # Criar arquivo de controle com erro
+                alert_gen.create_control_file(meteogram_filename, error=error_msg)
                 
-            print("Processamento concluído com sucesso!")
         except FileNotFoundError as e:
-            print(f"ERRO FATAL: {str(e)}")
-            print("Não foi possível continuar o processamento. Verifique o arquivo de configuração.")
+            error_msg = f"ERRO FATAL: {str(e)} - Não foi possível continuar o processamento. Verifique o arquivo de configuração."
+            print(error_msg)
+            # Criar arquivo de controle com erro
+            alert_gen.create_control_file(meteogram_filename, error=error_msg)
             sys.exit(1)
         except Exception as e:
-            print(f"ERRO FATAL: {str(e)}")
-            print("Ocorreu um erro inesperado durante o processamento.")
+            error_msg = f"ERRO FATAL: {str(e)} - Ocorreu um erro inesperado durante o processamento."
+            print(error_msg)
+            # Criar arquivo de controle com erro
+            alert_gen.create_control_file(meteogram_filename, error=error_msg)
             sys.exit(1)
         finally:
             end_time = time.time()
