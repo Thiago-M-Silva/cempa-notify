@@ -65,6 +65,23 @@ class UserService:
             return []
     
     @staticmethod
+    def get_user_by_email(email):
+        """
+        Busca um usuário pelo email.
+        
+        Args:
+            email (str): Email do usuário a ser buscado
+            
+        Returns:
+            User: Objeto do usuário encontrado ou None se não encontrado
+        """
+        try:
+            return User.query.filter_by(email=email).first()
+        except Exception as e:
+            print(f"Error fetching user by email: {e}")
+            return None
+
+    @staticmethod
     def delete(user_id):
         try:
             # Validate UUID format
@@ -85,24 +102,49 @@ class UserService:
             return False
 
     @staticmethod
-    def update(user_id, data):
+    def update_by_email(email, data):
+        """
+        Atualiza os alertas de um usuário pelo email.
+        Mantém os dados do usuário inalterados, apenas atualiza os alertas.
+        
+        Args:
+            email (str): Email do usuário a ser atualizado
+            data (dict): Dicionário com os dados do usuário e alertas
+                {
+                    "username": str,
+                    "email": str,
+                    "alerts": [
+                        {
+                            "city": str,
+                            "types": list[str]
+                        }
+                    ]
+                }
+            
+        Returns:
+            User: Objeto do usuário atualizado ou None em caso de erro
+        """
         try:
-            # Validate UUID format
-            try:
-                uuid.UUID(user_id)
-            except ValueError:
-                print(f"Invalid UUID format: {user_id}")
+            user = UserService.get_user_by_email(email)
+            if not user:
+                print(f"User not found with email: {email}")
                 return None
-                
-            user = User.query.get(user_id)
-            if user:
-                for key, value in data.items():
-                    setattr(user, key, value)
-                db.session.commit()
-                return user
-            return None
+
+            # Remove todos os alertas existentes
+            Alert.query.filter_by(user_id=user.id).delete()
+            
+            # Cria novos alertas
+            alerts_data = data.get('alerts', [])
+            for alert in alerts_data:
+                city = alert['city']
+                for alert_type in alert['types']:
+                    user_alert = Alert(city=city, alert_type=alert_type)
+                    user.alerts.append(user_alert)
+            
+            db.session.commit()
+            return user
         except Exception as e:
-            print(f"Error updating user: {e}")
+            print(f"Error updating user alerts: {e}")
             db.session.rollback()
             return None
 

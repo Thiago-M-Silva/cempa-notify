@@ -111,6 +111,19 @@ class ConfigParser:
         
         return self.config_map[polygon_name].get(key)
     
+    def get_monthly_temp_min_threshold(self, polygon_name, month):
+        """
+        Obtém o limite mínimo de temperatura para um mês específico.
+        
+        Args:
+            polygon_name (str): Nome do polígono
+            month (int): Mês (1-12)
+            
+        Returns:
+            float: Valor do limite mínimo ou None se não encontrado
+        """
+        return self.get_monthly_temp_threshold(polygon_name, month, threshold_type='min')
+    
     def get_display_name(self, polygon_name):
         """
         Obtém o nome de exibição para um polígono.

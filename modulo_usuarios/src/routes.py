@@ -25,6 +25,10 @@ create_user
 get_users
     busca todos os usuários cadastrados
 
+get_user_by_email
+    busca um usuário específico pelo email
+    parâmetros: email (query parameter)
+
 delete_user
     deleta um usuário pelo UUID (string)
     
@@ -69,12 +73,52 @@ def delete_user(id):
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
-@bp.route('/users/<string:id>', methods=['PUT'])
-def update_user(id):
+@bp.route('/users', methods=['PUT'])
+def update():
+    """
+    Atualiza os alertas de um usuário pelo email.
+    Exemplo: PUT /users
+    Body:
+        {
+            "username": "nome do usuário",
+            "email": "email do usuário",
+            "alerts": [
+                {
+                    "city": "cidade1",
+                    "types": ["tipo1", "tipo2"]
+                }
+            ]
+        }
+    """
     try:
-        user = UserService.update(id, request.get_json())
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return make_response(jsonify({'error': 'Email is required in request body'}), 400)
+            
+        user = UserService.update_by_email(data['email'], data)
         if user:
-            return make_response(jsonify(user.json()), 200)
-        return make_response(jsonify({'error': 'user not found'}), 404)
+            return make_response(jsonify(user.json_public()), 200)
+        return make_response(jsonify({'error': 'User not found'}), 404)
+    except Exception as e:
+        return make_response(jsonify({'error': str(e)}), 400)
+
+@bp.route('/users/email', methods=['GET'])
+def get_user_by_email():
+    """
+    Busca um usuário pelo email.
+    Exemplo: /users/email?email=usuario@exemplo.com
+    """
+    try:
+        email = request.args.get('email')
+        
+        if not email:
+            return make_response(jsonify({'error': 'Email parameter is required'}), 400)
+            
+        user = UserService.get_user_by_email(email)
+        
+        if not user:
+            return make_response(jsonify({'message': 'User not found'}), 404)
+        
+        return make_response(jsonify(user.json_public()), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
