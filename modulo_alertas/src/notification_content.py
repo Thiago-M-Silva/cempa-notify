@@ -43,9 +43,9 @@ HUMIDITY_ALERTS = {
 
 # Níveis de alerta de temperatura e recomendações
 TEMPERATURE_ALERTS = {
-    "atencao": {
+    "atencao_alta": {
         "range": (3, 4.9),
-        "title": "Estado de Atenção",
+        "title": "Estado de Atenção - Temperatura Alta",
         "color": "#FF9800",  # Laranja
         "recommendations": [
             "Beba bastante água ao longo do dia",
@@ -54,9 +54,9 @@ TEMPERATURE_ALERTS = {
             "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas"
         ]
     },
-    "alerta": {
+    "alerta_alta": {
         "range": (5, 6.9),
-        "title": "Estado de Alerta",
+        "title": "Estado de Alerta - Temperatura Alta",
         "color": "#FF5722",  # Laranja escuro
         "recommendations": [
             "Reduza a exposição direta ao sol, principalmente nas horas mais quentes",
@@ -66,9 +66,9 @@ TEMPERATURE_ALERTS = {
             "Esteja atento a sinais como tontura, dor de cabeça ou cansaço excessivo"
         ]
     },
-    "emergencia": {
+    "emergencia_alta": {
         "range": (7, 30),
-        "title": "Estado de Emergência",
+        "title": "Estado de Emergência - Temperatura Alta",
         "color": "#B71C1C",  # Vermelho escuro
         "recommendations": [
             "Fique em ambientes frescos e bem ventilados sempre que possível",
@@ -76,6 +76,41 @@ TEMPERATURE_ALERTS = {
             "Use protetor solar e chapéus se precisar sair",
             "Monitore familiares e vizinhos em situação de vulnerabilidade",
             "Em caso de mal-estar intenso, procure atendimento médico imediatamente"
+        ]
+    },
+    "atencao_baixa": {
+        "range": (-4.9, -3),
+        "title": "Estado de Atenção - Temperatura Baixa",
+        "color": "#2196F3",  # Azul
+        "recommendations": [
+            "Use roupas adequadas para o frio",
+            "Mantenha os ambientes aquecidos",
+            "Evite exposição prolongada ao frio",
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas"
+        ]
+    },
+    "alerta_baixa": {
+        "range": (-6.9, -5),
+        "title": "Estado de Alerta - Temperatura Baixa",
+        "color": "#1976D2",  # Azul escuro
+        "recommendations": [
+            "Use roupas em camadas para melhor proteção térmica",
+            "Mantenha portas e janelas fechadas para preservar o calor",
+            "Evite atividades ao ar livre nas horas mais frias",
+            "Mantenha-se hidratado com bebidas quentes",
+            "Esteja atento a sinais como tremores, dormência ou alteração na cor da pele"
+        ]
+    },
+    "emergencia_baixa": {
+        "range": (-30, -7),
+        "title": "Estado de Emergência - Temperatura Baixa",
+        "color": "#0D47A1",  # Azul muito escuro
+        "recommendations": [
+            "Evite sair ao ar livre, exceto em casos de extrema necessidade",
+            "Mantenha os ambientes aquecidos e bem isolados",
+            "Use roupas adequadas e em camadas",
+            "Monitore familiares e vizinhos em situação de vulnerabilidade",
+            "Em caso de hipotermia (tremores intensos, confusão mental, sonolência), procure atendimento médico imediatamente"
         ]
     }
 }
@@ -129,17 +164,44 @@ def generate_humidity_recommendations_html(humidity_value):
     
     return recommendations_html
 
-def generate_temperature_recommendations_html(difference):
+def get_temperature_alert_level(difference, is_max=True):
+    """
+    Determina o nível de alerta com base na diferença de temperatura.
+    
+    Args:
+        difference (float): Diferença entre a temperatura e o limite
+        is_max (bool): Se True, verifica alertas de temperatura alta, se False, verifica alertas de temperatura baixa
+        
+    Returns:
+        tuple: (chave do nível, informações do nível) ou (None, None) se fora dos níveis de alerta
+    """
+    prefix = "alta" if is_max else "baixa"
+    
+    for level_key, level_info in TEMPERATURE_ALERTS.items():
+        if level_key.endswith(prefix):
+            min_val, max_val = level_info["range"]
+            if is_max:
+                if min_val <= difference <= max_val:
+                    return level_key, level_info
+            else:
+                # Para temperatura baixa, a diferença é negativa
+                if -max_val <= difference <= -min_val:
+                    return level_key, level_info
+    
+    return None, None
+
+def generate_temperature_recommendations_html(difference, is_max=True):
     """
     Gera o HTML com as recomendações baseadas na diferença de temperatura.
     
     Args:
-        difference (float): Diferença entre a temperatura atual e o limite
+        difference (float): Diferença entre a temperatura e o limite
+        is_max (bool): Se True, gera recomendações para temperatura alta, se False, para temperatura baixa
         
     Returns:
-        str: HTML com as recomendações ou string vazia se abaixo dos níveis de alerta
+        str: HTML com as recomendações ou string vazia se fora dos níveis de alerta
     """
-    level_key, level_info = get_temperature_alert_level(difference)
+    level_key, level_info = get_temperature_alert_level(difference, is_max)
     
     if not level_info:
         return ""
@@ -208,8 +270,8 @@ class EmailContentStrategy(NotificationContentStrategy):
         difference = valor - threshold
         
         recommendations_html = ""
-        if is_max and difference > 0:
-            recommendations_html = self.generate_temp_recs(difference)
+        if (is_max and difference > 0) or (not is_max and difference < 0):
+            recommendations_html = self.generate_temp_recs(difference, is_max)
         
         # Formatar o período da previsão
         periodo_previsao = ""
@@ -319,6 +381,13 @@ class SMSContentStrategy(NotificationContentStrategy):
                 message += "Estado de Alerta! Reduza exposição ao sol."
             elif difference >= 3:
                 message += "Estado de Atenção! Mantenha-se hidratado."
+        elif not is_max and difference < 0:
+            if difference <= -7:
+                message += "Estado de Emergência! Evite exposição ao frio."
+            elif difference <= -5:
+                message += "Estado de Alerta! Use roupas adequadas."
+            elif difference <= -3:
+                message += "Estado de Atenção! Mantenha-se aquecido."
         
         message += f" Para descadastrar: http://200.137.215.94:8081/users/delete/{user_id}"
         return message

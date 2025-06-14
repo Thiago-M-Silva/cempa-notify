@@ -210,11 +210,18 @@ class AlertGenerator:
             if not display_name:
                 continue  # Pular se não tiver nome de exibição
             
-            # Obter o limiar de temperatura para este mês
-            threshold = self.config.get_monthly_temp_threshold(polygon_name, month)
+            # Obter os limiares de temperatura para este mês
+            max_threshold = self.config.get_monthly_temp_threshold(polygon_name, month)
+            min_threshold = self.config.get_monthly_temp_min_threshold(polygon_name, month)
             
-            if not threshold or threshold == 0:
-                continue  # Pular se não tiver limiar configurado ou se for 0
+            # Ignorar limiares que são 0, pois indicam que não há limite configurado
+            if max_threshold == 0:
+                max_threshold = None
+            if min_threshold == 0:
+                min_threshold = None
+            
+            if not max_threshold and not min_threshold:
+                continue  # Pular se não tiver limiares configurados válidos
             
             # Verificar se o polígono existe nos dados do meteograma
             if polygon_name not in self.meteogram_data:
@@ -228,40 +235,69 @@ class AlertGenerator:
             
             # Verificar cada registro de tempo
             max_temp_c = float('-inf')
+            min_temp_c = float('inf')
             max_temp_data = None
+            min_temp_data = None
             
             for seconds, values in time_data.items():
-                if 'Tmax' in values:
+                if 'Tmax' in values and 'Tmin' in values:
                     # Converter de Kelvin para Celsius
-                    temp_k = values['Tmax']
-                    temp_c = self.kelvin_to_celsius(temp_k)
+                    temp_max_k = values['Tmax']
+                    temp_min_k = values['Tmin']
+                    temp_max_c = self.kelvin_to_celsius(temp_max_k)
+                    temp_min_c = self.kelvin_to_celsius(temp_min_k)
                     
-                    # Calcular a diferença com o limiar
-                    diff = temp_c - threshold
+                    # Verificar temperatura máxima
+                    if max_threshold:
+                        diff_max = temp_max_c - max_threshold
+                        if temp_max_c > max_temp_c and diff_max >= minimum_diff_temperature_min:
+                            max_temp_c = temp_max_c
+                            max_temp_data = {
+                                'polygon_name': polygon_name,
+                                'seconds': seconds,
+                                'date': values.get('date', 'N/A'),
+                                'temp_k': temp_max_k,
+                                'temp_c': temp_max_c,
+                                'threshold': max_threshold,
+                                'difference': diff_max
+                            }
                     
-                    # Atualizar a temperatura máxima apenas se a diferença for maior ou igual ao mínimo
-                    if temp_c > max_temp_c and diff >= minimum_diff_temperature_min:
-                        max_temp_c = temp_c
-                        max_temp_data = {
-                            'polygon_name': polygon_name,
-                            'seconds': seconds,
-                            'date': values.get('date', 'N/A'),
-                            'temp_k': temp_k,
-                            'temp_c': temp_c,
-                            'threshold': threshold,
-                            'difference': diff
-                        }
+                    # Verificar temperatura mínima
+                    if min_threshold:
+                        diff_min = temp_min_c - min_threshold
+                        if temp_min_c < min_temp_c and diff_min <= -minimum_diff_temperature_min:
+                            min_temp_c = temp_min_c
+                            min_temp_data = {
+                                'polygon_name': polygon_name,
+                                'seconds': seconds,
+                                'date': values.get('date', 'N/A'),
+                                'temp_k': temp_min_k,
+                                'temp_c': temp_min_c,
+                                'threshold': min_threshold,
+                                'difference': diff_min
+                            }
             
-            # Se encontrou temperatura acima do limiar e com diferença mínima
-            if max_temp_c > threshold and max_temp_data:
-                # Armazenar o alerta para esta cidade
-                alerts[display_name]['temperature'] = {
+            # Se encontrou temperatura acima do limiar máximo
+            if max_threshold and max_temp_c > max_threshold and max_temp_data:
+                alerts[display_name]['temperature_high'] = {
                     'value': max_temp_c,
                     'value_k': max_temp_data['temp_k'],
-                    'threshold': threshold,
+                    'threshold': max_threshold,
                     'difference': max_temp_data['difference'],
                     'date': max_temp_data['date'],
                     'seconds': max_temp_data['seconds'],
+                    'polygon_name': polygon_name
+                }
+            
+            # Se encontrou temperatura abaixo do limiar mínimo
+            if min_threshold and min_temp_c < min_threshold and min_temp_data:
+                alerts[display_name]['temperature_low'] = {
+                    'value': min_temp_c,
+                    'value_k': min_temp_data['temp_k'],
+                    'threshold': min_threshold,
+                    'difference': min_temp_data['difference'],
+                    'date': min_temp_data['date'],
+                    'seconds': min_temp_data['seconds'],
                     'polygon_name': polygon_name
                 }
         
@@ -412,9 +448,9 @@ class AlertGenerator:
         alerts_sent = 0
         
         for city, city_alerts in self.alerts.items():
-            # Alerta de temperatura
-            if 'temperature' in city_alerts:
-                alert = city_alerts['temperature']
+            # Alerta de temperatura alta
+            if 'temperature_high' in city_alerts:
+                alert = city_alerts['temperature_high']
                 subject = f"AVISO: Previsão de alta temperatura em {city}"
                 
                 if self.alert_service:
@@ -429,7 +465,7 @@ class AlertGenerator:
                             try:
                                 start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
                                 end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
-
+                                
                                 # Gerar conteúdo do alerta usando a estratégia apropriada
                                 content = self.content_strategy.generate_temperature_content(
                                     city,
@@ -437,7 +473,7 @@ class AlertGenerator:
                                     alert['threshold'],
                                     "°C",
                                     user.id,
-                                    True,
+                                    True,  # is_max=True para temperatura alta
                                     start_time['formatted'],
                                     end_time['formatted']
                                 )
@@ -446,14 +482,58 @@ class AlertGenerator:
                                 self.email_sender.send([user.email], content, subject)
                                 alerts_sent += 1
                             except Exception as e:
-                                print(f"Erro ao enviar email de alerta de temperatura para {user.email} em {city}: {str(e)}")
+                                print(f"Erro ao enviar email de alerta de temperatura alta para {user.email} em {city}: {str(e)}")
                                 continue
                     except Exception as e:
                         print(f"Erro ao buscar destinatários para {city}: {str(e)}")
                         continue
                 
                 if not users:
-                    print(f"Nenhum destinatário encontrado para alerta de temperatura em {city}")
+                    print(f"Nenhum destinatário encontrado para alerta de temperatura alta em {city}")
+                    continue
+
+            # Alerta de temperatura baixa
+            if 'temperature_low' in city_alerts:
+                alert = city_alerts['temperature_low']
+                subject = f"AVISO: Previsão de baixa temperatura em {city}"
+                
+                if self.alert_service:
+                    try:
+                        # Buscar usuários baseados na cidade e tipo de alerta
+                        users = self.alert_service.get_users_by_alert_and_city(
+                            alert_types=["Temperatura"],
+                            cities=[city]  # Usar o nome de exibição da cidade diretamente
+                        )
+                        # Enviar email individual para cada usuário
+                        for user in users:
+                            try:
+                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
+                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
+                                
+                                # Gerar conteúdo do alerta usando a estratégia apropriada
+                                content = self.content_strategy.generate_temperature_content(
+                                    city,
+                                    alert['value'],
+                                    alert['threshold'],
+                                    "°C",
+                                    user.id,
+                                    False,  # is_max=False para temperatura baixa
+                                    start_time['formatted'],
+                                    end_time['formatted']
+                                )
+                                
+                                # Enviar email para o usuário
+                                self.email_sender.send([user.email], content, subject)
+                                alerts_sent += 1
+                            except Exception as e:
+                                print(f"Erro ao enviar email de alerta de temperatura baixa para {user.email} em {city}: {str(e)}")
+                                continue
+                    except Exception as e:
+                        print(f"Erro ao buscar destinatários para {city}: {str(e)}")
+                        continue
+                
+                if not users:
+                    print(f"Nenhum destinatário encontrado para alerta de temperatura baixa em {city}")
                     continue
 
             # Alerta de umidade baixa
@@ -473,7 +553,7 @@ class AlertGenerator:
                             try:
                                 start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
                                 end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
-
+                                
                                 # Gerar conteúdo do alerta usando a estratégia apropriada
                                 content = self.content_strategy.generate_humidity_content(
                                     city,
@@ -517,14 +597,28 @@ class AlertGenerator:
         for city, city_alerts in self.alerts.items():
             summary += f"\nCidade: {city}\n"
             
-            if 'temperature' in city_alerts:
-                alert = city_alerts['temperature']
+            if 'temperature_high' in city_alerts:
+                alert = city_alerts['temperature_high']
                 temp_k = alert.get('value_k', 'N/A')
                 
                 if isinstance(temp_k, (int, float)):
-                    summary += f"  - Temperatura: {alert['value']:.1f}°C ({temp_k:.1f}K)\n"
+                    summary += f"  - Temperatura alta: {alert['value']:.1f}°C ({temp_k:.1f}K)\n"
                 else:
-                    summary += f"  - Temperatura: {alert['value']:.1f}°C\n"
+                    summary += f"  - Temperatura alta: {alert['value']:.1f}°C\n"
+                    
+                summary += f"    Limite: {alert['threshold']}°C\n"
+                summary += f"    Diferença: {alert['difference']:.1f}°C\n"
+                summary += f"    Segundos: {alert['seconds']}\n"
+                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])['formatted']}\n"
+            
+            if 'temperature_low' in city_alerts:
+                alert = city_alerts['temperature_low']
+                temp_k = alert.get('value_k', 'N/A')
+                
+                if isinstance(temp_k, (int, float)):
+                    summary += f"  - Temperatura baixa: {alert['value']:.1f}°C ({temp_k:.1f}K)\n"
+                else:
+                    summary += f"  - Temperatura baixa: {alert['value']:.1f}°C\n"
                     
                 summary += f"    Limite: {alert['threshold']}°C\n"
                 summary += f"    Diferença: {alert['difference']:.1f}°C\n"
