@@ -72,7 +72,7 @@ class Form:
 
 <head>
     <meta charset="UTF-8">
-    <title>Cadastro Alertas CEMPA</title>
+    <title>CEMPA - Cadastro Alertas</title>
     <link rel="icon" href="/static/cempa_ico.png" type="image/png">
     <style>
         body {
@@ -195,7 +195,7 @@ class Form:
 
 <body>
     <form id="alertForm">
-        <h2>Cadastro Alertas CEMPA</h2>
+        <h2>CEMPA - Cadastro Alertas</h2>
         <p>Cadastre-se para receber alertas meteorológicos por e-mail diretamente do CEMPA.</p>
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required>
