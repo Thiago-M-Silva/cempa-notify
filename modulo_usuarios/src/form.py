@@ -197,11 +197,11 @@ class Form:
     <form id="alertForm">
         <h2>CEMPA - Cadastro Aviso</h2>
         <p>Cadastre-se para receber avisos meteorológicos por e-mail diretamente do CEMPA.</p>
-        <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome" required>
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
         <div id="emailMsg" class="help-text"></div>
+        <label for="nome">Nome:</label>
+        <input type="text" id="nome" name="nome" required>
         <label for="cidadeSelect">Adicionar cidade:</label>
         <select id="cidadeSelect">
 {city_options}        </select>
