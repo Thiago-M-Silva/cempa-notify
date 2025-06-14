@@ -205,7 +205,7 @@ def generate_temperature_alert_email(cidade_nome, valor, threshold, unit, user_i
         </div>
         <div style="padding: 20px;">
             <p><strong>Cidade:</strong> {cidade_nome}</p>
-            <p><strong>Temperatura:</strong> {valor:.1f}{unit} (limite: {threshold}{unit})</p>
+            <p><strong>Temperatura:</strong> {valor:.1f}{unit}</p>
             
             {recommendations_html}
             
