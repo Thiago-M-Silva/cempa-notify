@@ -72,7 +72,7 @@ class Form:
 
 <head>
     <meta charset="UTF-8">
-    <title>CEMPA - Cadastro Aviso</title>
+    <title>CEMPA - Cadastro Avisos</title>
     <link rel="icon" href="/static/cempa_ico.png" type="image/png">
     <style>
         body {
@@ -195,7 +195,7 @@ class Form:
 
 <body>
     <form id="alertForm">
-        <h2>CEMPA - Cadastro Aviso</h2>
+        <h2>CEMPA - Cadastro Avisos</h2>
         <p>Cadastre-se para receber avisos meteorológicos por e-mail diretamente do CEMPA.</p>
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
@@ -338,7 +338,7 @@ class Form:
             });
             
             if (!valid) {
-                errorMsg.textContent = "Selecione pelo menos um tipo de aviso para cada cidade.";
+                errorMsg.textContent = "Selecione pelo menos um tipo de aviso para cada cidade ou remova-a.";
                 return;
             }
             
