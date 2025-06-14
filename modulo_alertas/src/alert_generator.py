@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime, timedelta
 from meteogram_parser import MeteogramParser
 from sendEmail import EmailSender
-from generateMail import generate_temperature_alert_email, generate_humidity_alert_email
+from notification_content import NotificationContentFactory
 from file_utils import clean_old_files, download_meteogram_file
 import sys
 import math
@@ -36,6 +36,9 @@ class AlertGenerator:
         self.config_map = self.config.get_config_map()
         self.email_sender = EmailSender()
         self.alert_service = alert_service
+        
+        # Inicializar a estratégia de geração de conteúdo
+        self.content_strategy = NotificationContentFactory.create_strategy()
         
         # Configurar o parser de meteograma
         self.meteogram_path = meteogram_path
@@ -412,7 +415,7 @@ class AlertGenerator:
             # Alerta de temperatura
             if 'temperature' in city_alerts:
                 alert = city_alerts['temperature']
-                subject = f"AVISO: Temperatura acima do limite em {city}"
+                subject = f"AVISO: Previsão de alta temperatura em {city}"
                 
                 if self.alert_service:
                     try:
@@ -424,18 +427,23 @@ class AlertGenerator:
                         # Enviar email individual para cada usuário
                         for user in users:
                             try:
-                                # Gerar email personalizado para o usuário
-                                email_content = generate_temperature_alert_email(
+                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
+                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
+
+                                # Gerar conteúdo do alerta usando a estratégia apropriada
+                                content = self.content_strategy.generate_temperature_content(
                                     city,
                                     alert['value'],
                                     alert['threshold'],
                                     "°C",
                                     user.id,
-                                    True
+                                    True,
+                                    start_time['formatted'],
+                                    end_time['formatted']
                                 )
                                 
-                                # Enviar email para o usuário específico
-                                self.email_sender.enviar_email([user.email], email_content, subject)
+                                # Enviar email para o usuário
+                                self.email_sender.send([user.email], content, subject)
                                 alerts_sent += 1
                             except Exception as e:
                                 print(f"Erro ao enviar email de alerta de temperatura para {user.email} em {city}: {str(e)}")
@@ -451,9 +459,8 @@ class AlertGenerator:
             # Alerta de umidade baixa
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
-                subject = f"AVISO: Umidade abaixo do limite em {city}"
+                subject = f"AVISO: Previsão de baixa umidade relativa do ar em {city}"
                 
-
                 if self.alert_service:
                     try:
                         # Buscar usuários baseados na cidade e tipo de alerta
@@ -463,19 +470,24 @@ class AlertGenerator:
                         )
                         # Enviar email individual para cada usuário
                         for user in users:
-                            try:                                
-                                # Gerar email personalizado para o usuário
-                                email_content = generate_humidity_alert_email(
+                            try:
+                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
+                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
+
+                                # Gerar conteúdo do alerta usando a estratégia apropriada
+                                content = self.content_strategy.generate_humidity_content(
                                     city,
                                     alert['value'],
                                     alert['threshold'],
                                     "%",
                                     user.id,
-                                    False
+                                    False,
+                                    start_time['formatted'],
+                                    end_time['formatted']
                                 )
                                 
-                                # Enviar email para o usuário específico
-                                self.email_sender.enviar_email([user.email], email_content, subject)
+                                # Enviar email para o usuário
+                                self.email_sender.send([user.email], content, subject)
                                 alerts_sent += 1
                             except Exception as e:
                                 print(f"Erro ao enviar email de alerta de umidade baixa para {user.email} em {city}: {str(e)}")
@@ -517,7 +529,7 @@ class AlertGenerator:
                 summary += f"    Limite: {alert['threshold']}°C\n"
                 summary += f"    Diferença: {alert['difference']:.1f}°C\n"
                 summary += f"    Segundos: {alert['seconds']}\n"
-                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])}\n"
+                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])['formatted']}\n"
             
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
@@ -530,17 +542,44 @@ class AlertGenerator:
                     summary += f"    Temperatura ponto de orvalho (TDave): {alert['tdave']:.1f}°C\n"
                 
                 summary += f"    Segundos: {alert['seconds']}\n"
-                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])}\n"
+                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])['formatted']}\n"
         
         return summary
 
     def seconds_to_hhmm(self, seconds):
-        """Converte segundos para formato HH:MM"""
+        """
+        Converte segundos para componentes de tempo (horas e minutos), ajustando de UTC-0 para UTC-3.
+        
+        Args:
+            seconds (int): Segundos desde meia-noite em UTC-0
+            
+        Returns:
+            dict: Dicionário com componentes de tempo em UTC-3:
+                {
+                    'hours': int,      # Horas (0-23)
+                    'minutes': int,    # Minutos (0-59)
+                    'formatted': str   # String formatada como "HH:MM"
+                }
+        """
         # Converter para inteiro antes de calcular horas e minutos
         seconds = int(seconds)
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        return f"{hours:02d}:{minutes:02d}"
+        
+        # Converter de UTC-0 para UTC-3 (subtrair 3 horas = 10800 segundos)
+        seconds_utc3 = seconds - 10800
+        
+        # Ajustar para o caso de horário negativo (virar o dia)
+        if seconds_utc3 < 0:
+            seconds_utc3 += 86400  # Adicionar 24 horas (86400 segundos)
+        
+        # Calcular horas e minutos
+        hours = seconds_utc3 // 3600
+        minutes = (seconds_utc3 % 3600) // 60
+        
+        return {
+            'hours': hours,
+            'minutes': minutes,
+            'formatted': f"{hours:02d}:{minutes:02d}"
+        }
 
 if __name__ == "__main__":
     import time

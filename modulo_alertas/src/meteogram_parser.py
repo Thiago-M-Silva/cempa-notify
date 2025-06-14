@@ -1,7 +1,5 @@
 import os
-import numpy as np
 import pandas as pd
-from datetime import datetime
 
 class MeteogramParser:
     """
@@ -202,37 +200,6 @@ class MeteogramParser:
             print(f"Polígonos filtrados: {total_polygons - filtered_polygons}")
         
         return self.city_data
-    
-    def to_dataframe(self, polygon_name=None):
-        """
-        Converte os dados extraídos para um DataFrame do pandas.
-        
-        Args:
-            polygon_name (str, optional): Nome do polígono para filtrar. Se None, retorna dados de todos os polígonos.
-            
-        Returns:
-            pandas.DataFrame: DataFrame com os dados extraídos
-        """
-        if not self.city_data:
-            self.parse()
-        
-        all_data = []
-        
-        if polygon_name and polygon_name in self.city_data:
-            # Processar apenas o polígono especificado
-            for seconds, data in self.city_data[polygon_name].items():
-                row = {'polygon_name': polygon_name, 'seconds': seconds}
-                row.update(data)
-                all_data.append(row)
-        else:
-            # Processar todos os polígonos
-            for polygon, time_data in self.city_data.items():
-                for seconds, data in time_data.items():
-                    row = {'polygon_name': polygon, 'seconds': seconds}
-                    row.update(data)
-                    all_data.append(row)
-        
-        return pd.DataFrame(all_data)
     
     def get_polygon_names(self):
         """

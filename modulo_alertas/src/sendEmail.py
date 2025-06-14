@@ -30,7 +30,18 @@ class EmailSender:
             print("Configure estas variáveis no arquivo .env", file=sys.stderr)
             sys.exit(1)  # Exit with error code
         
-    def enviar_email(self, destinatarios, corpo_email=None, assunto="Alerta Meteorológico"):  
+    def send(self, destinatarios, corpo_email=None, assunto="Alerta Meteorológico"):
+        """
+        Envia um email para uma lista de destinatários.
+        
+        Args:
+            destinatarios (list): Lista de emails dos destinatários
+            corpo_email (str, optional): Corpo do email. Se None, usa o template padrão
+            assunto (str, optional): Assunto do email. Defaults to "Alerta Meteorológico"
+            
+        Returns:
+            bool: True se o email foi enviado com sucesso, False caso contrário
+        """
         msg = email.message.Message()
         msg['Subject'] = assunto
         msg['From'] = self.email_remetente
