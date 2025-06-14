@@ -412,7 +412,7 @@ class AlertGenerator:
             # Alerta de temperatura
             if 'temperature' in city_alerts:
                 alert = city_alerts['temperature']
-                subject = f"ALERTA: Temperatura acima do limite em {city}"
+                subject = f"AVISO: Temperatura acima do limite em {city}"
                 
                 if self.alert_service:
                     try:
@@ -451,7 +451,7 @@ class AlertGenerator:
             # Alerta de umidade baixa
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
-                subject = f"ALERTA: Umidade abaixo do limite em {city}"
+                subject = f"AVISO: Umidade abaixo do limite em {city}"
                 
 
                 if self.alert_service:

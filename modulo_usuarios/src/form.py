@@ -72,7 +72,7 @@ class Form:
 
 <head>
     <meta charset="UTF-8">
-    <title>CEMPA - Cadastro Alertas</title>
+    <title>CEMPA - Cadastro Aviso</title>
     <link rel="icon" href="/static/cempa_ico.png" type="image/png">
     <style>
         body {
@@ -195,12 +195,13 @@ class Form:
 
 <body>
     <form id="alertForm">
-        <h2>CEMPA - Cadastro Alertas</h2>
-        <p>Cadastre-se para receber alertas meteorológicos por e-mail diretamente do CEMPA.</p>
+        <h2>CEMPA - Cadastro Aviso</h2>
+        <p>Cadastre-se para receber avisos meteorológicos por e-mail diretamente do CEMPA.</p>
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required>
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
+        <div id="emailMsg" class="help-text"></div>
         <label for="cidadeSelect">Adicionar cidade:</label>
         <select id="cidadeSelect">
 {city_options}        </select>
@@ -212,13 +213,17 @@ class Form:
     </form>
     <script>
         const cityBlocks = {};
-        document.getElementById('addCityBtn').addEventListener('click', function() {
-            const select = document.getElementById('cidadeSelect');
-            const option = select.options[select.selectedIndex];
-            const city = option.value;
-            const config = JSON.parse(option.getAttribute('data-config'));
+        let isEditing = false;
+
+        // Função para criar um bloco de cidade
+        function createCityBlock(city, selectedTypes = []) {
+            if (cityBlocks[city]) return;
             
-            if (!city || cityBlocks[city]) return;
+            const select = document.getElementById('cidadeSelect');
+            const option = Array.from(select.options).find(opt => opt.value === city);
+            if (!option) return;
+            
+            const config = JSON.parse(option.getAttribute('data-config'));
             
             // Cria bloco
             const block = document.createElement('div');
@@ -228,10 +233,12 @@ class Form:
             // Gerar checkboxes baseado nas configurações da cidade
             let checkboxes = '';
             if (config.has_temperature) {
-                checkboxes += '<label><input type="checkbox" value="Temperatura"> Temperatura</label>';
+                const checked = selectedTypes.includes('Temperatura') ? 'checked' : '';
+                checkboxes += `<label><input type="checkbox" value="Temperatura" ${checked}> Temperatura</label>`;
             }
             if (config.has_humidity) {
-                checkboxes += '<label><input type="checkbox" value="Umidade"> Umidade</label>';
+                const checked = selectedTypes.includes('Umidade') ? 'checked' : '';
+                checkboxes += `<label><input type="checkbox" value="Umidade" ${checked}> Umidade</label>`;
             }
             
             block.innerHTML = `
@@ -243,37 +250,83 @@ class Form:
             `;
             document.getElementById('cityBlocks').appendChild(block);
             cityBlocks[city] = block;
-        });
-        window.removeCityBlock = function(city) {
-            const block = cityBlocks[city];
-            if (block) {
-                block.remove();
-                delete cityBlocks[city];
+        }
+
+        // Função para preencher o formulário com os dados do usuário
+        async function fillUserData(email) {
+            // Limpar blocos existentes em qualquer caso
+            document.getElementById('cityBlocks').innerHTML = '';
+            for (const key in cityBlocks) delete cityBlocks[key];
+            isEditing = false;
+            
+            try {
+                const currentUrl = window.location.origin;
+                const response = await fetch(`${currentUrl}/users/email?email=${encodeURIComponent(email)}`);
+                
+                if (response.status === 200) {
+                    const userData = await response.json();
+                    
+                    // Preencher nome apenas se usuário for encontrado
+                    document.getElementById('nome').value = userData.username;
+                    
+                    // Criar blocos para cada alerta
+                    userData.alerts.forEach(alert => {
+                        createCityBlock(alert.city, alert.types);
+                    });
+                    
+                    // Marcar como edição
+                    isEditing = true;
+                    document.getElementById('emailMsg').textContent = 'Usuário encontrado. Você pode editar os alertas.';
+                    document.getElementById('emailMsg').style.color = '#28a745';
+                } else if (response.status === 404) {
+                    // Limpar mensagem se o usuário não for encontrado
+                    document.getElementById('emailMsg').textContent = 'Email não cadastrado. Preencha o formulário para se cadastrar.';
+                    document.getElementById('emailMsg').style.color = '#666';
+                }
+            } catch (error) {
+                console.error('Erro ao buscar usuário:', error);
+                document.getElementById('emailMsg').textContent = 'Erro ao verificar email.';
+                document.getElementById('emailMsg').style.color = '#dc3545';
             }
         }
+
+        // Adicionar evento blur no campo de email
+        document.getElementById('email').addEventListener('blur', function() {
+            const email = this.value.trim();
+            if (email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                fillUserData(email);
+            }
+        });
+
+        // Modificar o evento de submit para lidar com edição
         document.getElementById('alertForm').addEventListener('submit', async function (e) {
             e.preventDefault();
             const nome = document.getElementById('nome').value.trim();
             const email = document.getElementById('email').value.trim();
             const errorMsg = document.getElementById('errorMsg');
             errorMsg.textContent = "";
+            
             if (!nome) {
                 errorMsg.textContent = "Nome é obrigatório.";
                 return;
             }
+            
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 errorMsg.textContent = "Insira um email válido.";
                 return;
             }
+            
             const blocks = document.querySelectorAll('.city-block');
             if (blocks.length === 0) {
                 errorMsg.textContent = "Adicione pelo menos uma cidade.";
                 return;
             }
+            
             const cidades = [];
             const alert_types = [];
             let valid = true;
+            
             blocks.forEach(block => {
                 const city = block.querySelector('strong').textContent;
                 const types = Array.from(block.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
@@ -283,20 +336,26 @@ class Form:
                 cidades.push(city);
                 alert_types.push(types);
             });
+            
             if (!valid) {
                 errorMsg.textContent = "Selecione pelo menos um tipo de alerta para cada cidade.";
                 return;
             }
+            
             try {
                 const currentUrl = window.location.origin;
-                // Criar o novo formato de JSON
                 const alerts = cidades.map((city, index) => ({
                     city: city,
                     types: alert_types[index]
                 }));
                 
-                const res = await fetch(`${currentUrl}/users`, {
-                    method: 'POST',
+                const method = isEditing ? 'PUT' : 'POST';
+                const url = isEditing ? 
+                    `${currentUrl}/users` : 
+                    `${currentUrl}/users`;
+                
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username: nome,
@@ -304,20 +363,42 @@ class Form:
                         alerts: alerts
                     })
                 });
+                
                 const data = await res.json();
-                if (res.status === 201) {
-                    alert('Usuário cadastrado com sucesso!');
+                if (res.status === 201 || res.status === 200) {
+                    alert(isEditing ? 'Usuário atualizado com sucesso!' : 'Usuário cadastrado com sucesso!');
                     document.getElementById('alertForm').reset();
                     document.getElementById('cityBlocks').innerHTML = '';
+                    document.getElementById('emailMsg').textContent = '';
                     for (const key in cityBlocks) delete cityBlocks[key];
+                    isEditing = false;
                 } else {
-                    errorMsg.textContent = 'Erro ao cadastrar usuário.';
+                    errorMsg.textContent = isEditing ? 'Erro ao atualizar usuário.' : 'Erro ao cadastrar usuário.';
                 }
             } catch (err) {
                 console.error(err);
                 errorMsg.textContent = 'Erro na comunicação com o servidor.';
             }
         });
+
+        // Manter o código existente do addCityBtn
+        document.getElementById('addCityBtn').addEventListener('click', function() {
+            const select = document.getElementById('cidadeSelect');
+            const option = select.options[select.selectedIndex];
+            const city = option.value;
+            
+            if (!city || cityBlocks[city]) return;
+            
+            createCityBlock(city);
+        });
+
+        window.removeCityBlock = function(city) {
+            const block = cityBlocks[city];
+            if (block) {
+                block.remove();
+                delete cityBlocks[city];
+            }
+        }
     </script>
 </body>
 
