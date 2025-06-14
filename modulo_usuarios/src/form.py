@@ -206,7 +206,7 @@ class Form:
         <select id="cidadeSelect">
 {city_options}        </select>
         <button type="button" id="addCityBtn">Adicionar cidade</button>
-        <div class="help-text">Selecione uma cidade e clique em Adicionar. Para cada cidade, escolha os tipos de alerta desejados.</div>
+        <div class="help-text">Selecione uma cidade e clique em Adicionar. Para cada cidade, escolha os tipos de avisos desejados.</div>
         <div id="cityBlocks"></div>
         <div id="errorMsg" class="error"></div>
         <button type="submit">Enviar</button>
@@ -276,7 +276,7 @@ class Form:
                     
                     // Marcar como edição
                     isEditing = true;
-                    document.getElementById('emailMsg').textContent = 'Usuário encontrado. Você pode editar os alertas.';
+                    document.getElementById('emailMsg').textContent = 'Usuário encontrado. Você pode editar os avisos.';
                     document.getElementById('emailMsg').style.color = '#28a745';
                 } else if (response.status === 404) {
                     // Limpar mensagem se o usuário não for encontrado
@@ -338,7 +338,7 @@ class Form:
             });
             
             if (!valid) {
-                errorMsg.textContent = "Selecione pelo menos um tipo de alerta para cada cidade.";
+                errorMsg.textContent = "Selecione pelo menos um tipo de aviso para cada cidade.";
                 return;
             }
             
