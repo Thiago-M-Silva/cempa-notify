@@ -39,6 +39,19 @@ class User(db.Model):
             ]
         }
 
+    def json_public(self):
+        """Retorna os dados do usuário sem o ID"""
+        return {
+            'username': self.username,
+            'email': self.email,
+            'alerts': [
+                {
+                    'city': alert.city,
+                    'types': [alert.alert_type]
+                } for alert in self.alerts
+            ]
+        }
+
 class Alert(db.Model):
     __tablename__ = 'alerts'
     id = db.Column(db.Integer, primary_key=True)

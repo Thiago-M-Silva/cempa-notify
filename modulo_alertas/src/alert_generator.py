@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from meteogram_parser import MeteogramParser
 from sendEmail import EmailSender
 from generateMail import generate_temperature_alert_email, generate_humidity_alert_email
@@ -11,6 +11,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from modulo_usuarios.src import create_app
 from modulo_usuarios.src.services import AlertService
 from shared_config.config_parser import ConfigParser
+
+minimum_diff_temperature_min = 1.0
 
 class AlertGenerator:
     """
@@ -176,6 +178,8 @@ class AlertGenerator:
     def check_temperature_alerts(self, date=None):
         """
         Verifica se há alertas de temperatura baseados nos limiares configurados.
+        Gera alertas apenas quando a diferença entre a temperatura e o limiar
+        é maior ou igual a minimum_diff_temperature_min.
         
         Args:
             date (datetime, optional): Data para determinar o mês.
@@ -229,8 +233,11 @@ class AlertGenerator:
                     temp_k = values['Tmax']
                     temp_c = self.kelvin_to_celsius(temp_k)
                     
-                    # Atualizar a temperatura máxima (em Celsius)
-                    if temp_c > max_temp_c:
+                    # Calcular a diferença com o limiar
+                    diff = temp_c - threshold
+                    
+                    # Atualizar a temperatura máxima apenas se a diferença for maior ou igual ao mínimo
+                    if temp_c > max_temp_c and diff >= minimum_diff_temperature_min:
                         max_temp_c = temp_c
                         max_temp_data = {
                             'polygon_name': polygon_name,
@@ -239,17 +246,17 @@ class AlertGenerator:
                             'temp_k': temp_k,
                             'temp_c': temp_c,
                             'threshold': threshold,
-                            'difference': temp_c - threshold
+                            'difference': diff
                         }
             
-            # Se encontrou temperatura acima do limiar
+            # Se encontrou temperatura acima do limiar e com diferença mínima
             if max_temp_c > threshold and max_temp_data:
                 # Armazenar o alerta para esta cidade
                 alerts[display_name]['temperature'] = {
                     'value': max_temp_c,
                     'value_k': max_temp_data['temp_k'],
                     'threshold': threshold,
-                    'difference': max_temp_c - threshold,
+                    'difference': max_temp_data['difference'],
                     'date': max_temp_data['date'],
                     'seconds': max_temp_data['seconds'],
                     'polygon_name': polygon_name
@@ -510,7 +517,7 @@ class AlertGenerator:
                 summary += f"    Limite: {alert['threshold']}°C\n"
                 summary += f"    Diferença: {alert['difference']:.1f}°C\n"
                 summary += f"    Segundos: {alert['seconds']}\n"
-                summary += f"    Data/Hora: {alert['date']}\n"
+                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])}\n"
             
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
@@ -519,13 +526,21 @@ class AlertGenerator:
                 
                 # Adicionar informações de temperatura se disponíveis
                 if 'tave' in alert and 'tdave' in alert:
-                    summary += f"    Temperatura máxima (Tave): {alert['tave']:.1f}°C\n"
+                    summary += f"    Temperatura média (Tave): {alert['tave']:.1f}°C\n"
                     summary += f"    Temperatura ponto de orvalho (TDave): {alert['tdave']:.1f}°C\n"
                 
                 summary += f"    Segundos: {alert['seconds']}\n"
-                summary += f"    Data/Hora: {alert['date']}\n"
+                summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])}\n"
         
         return summary
+
+    def seconds_to_hhmm(self, seconds):
+        """Converte segundos para formato HH:MM"""
+        # Converter para inteiro antes de calcular horas e minutos
+        seconds = int(seconds)
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        return f"{hours:02d}:{minutes:02d}"
 
 if __name__ == "__main__":
     import time
@@ -535,7 +550,7 @@ if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Caminho para o arquivo de configuração (2 níveis acima da pasta src)
-    config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config_files.csv'))
+    config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config.csv'))
     
     print(f"Usando arquivo de configuração: {config_path}")
 

@@ -32,7 +32,7 @@ class ConfigParser:
     
     def parse(self):
         """
-        Carrega o arquivo config_files.csv e transforma em um dicionário
+        Carrega o arquivo config.csv e transforma em um dicionário
         onde a chave é o polygon_name.
         
         Returns:
