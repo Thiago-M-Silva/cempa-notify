@@ -675,6 +675,31 @@ class AlertGenerator:
             'formatted': f"{hours:02d}:{minutes:02d}"
         }
 
+    def create_control_file(self, meteogram_filename):
+        """
+        Cria um arquivo de controle para indicar que o processamento do dia foi concluído.
+        
+        Args:
+            meteogram_filename (str): Nome do arquivo de meteograma processado
+            
+        Returns:
+            str: Caminho do arquivo de controle criado
+        """
+        # Obter o diretório do arquivo de meteograma
+        meteogram_dir = os.path.dirname(self.meteogram_path)
+        
+        # Criar nome do arquivo de controle (adicionar .processed ao nome original)
+        control_filename = f"{os.path.splitext(meteogram_filename)[0]}.processed"
+        control_path = os.path.join(meteogram_dir, control_filename)
+        
+        # Criar arquivo de controle com timestamp
+        with open(control_path, 'w') as f:
+            f.write(f"Processado em: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Arquivo original: {meteogram_filename}\n")
+        
+        print(f"Arquivo de controle criado: {control_path}")
+        return control_path
+
 if __name__ == "__main__":
     import time
     start_time = time.time()
@@ -693,6 +718,15 @@ if __name__ == "__main__":
     
     meteogramPathDir = os.path.abspath(os.path.join(current_dir, '../../', 'tmp_files'))
     meteogramPath = os.path.join(meteogramPathDir, meteogram_filename)
+    
+    # Verificar se já existe arquivo de controle para este dia
+    control_filename = f"{os.path.splitext(meteogram_filename)[0]}.processed"
+    control_path = os.path.join(meteogramPathDir, control_filename)
+    
+    if os.path.exists(control_path):
+        print(f"Arquivo de controle encontrado: {control_path}")
+        print("Este arquivo já foi processado hoje. Encerrando execução.")
+        sys.exit(0)
     
     print(f"Buscando arquivo de meteograma: {meteogramPath}")
 
@@ -734,6 +768,9 @@ if __name__ == "__main__":
                 if alerts:
                     alerts_enviados = alert_gen.send_email_alerts()
                     print(f"Enviados {alerts_enviados} alertas para os destinatários cadastrados")
+                
+                # Criar arquivo de controle para indicar que o processamento foi concluído
+                alert_gen.create_control_file(meteogram_filename)
             else:
                 print("Não foi possível carregar os dados do meteograma")
                 

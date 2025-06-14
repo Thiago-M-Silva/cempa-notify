@@ -87,7 +87,7 @@ def download_cempa_files(date=None, hours=None):
         print("\nNenhum arquivo está disponível.")
         return None
 
-def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra,HST*-MeteogramASC.out"):
+def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra,HST*-MeteogramASC.out,*.processed"):
     """
     Remove arquivos que não são do dia atual do diretório especificado.
     Deleta permanentemente os arquivos sem enviá-los para a lixeira.
@@ -95,6 +95,7 @@ def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra,HST*-Meteogra
     Args:
         directory (str): Diretório onde os arquivos estão armazenados
         file_pattern (str): Padrões de arquivos a serem verificados, separados por vírgula
+            Inclui: *.ctl, *.gra, HST*-MeteogramASC.out, *.processed
     
     Returns:
         tuple: (quantidade de arquivos removidos, espaço liberado em bytes)
@@ -125,9 +126,9 @@ def clean_old_files(directory=pathFiles, file_pattern="*.ctl,*.gra,HST*-Meteogra
         filename = os.path.basename(file_path)
         
         # Verificar se é um arquivo de meteograma (formato HST*-MeteogramASC.out)
-        if filename.startswith("HST") and filename.endswith("-MeteogramASC.out"):
+        if filename.startswith("HST") and (filename.endswith("-MeteogramASC.out") or filename.endswith(".processed")):
             try:
-                # Extrair a data do nome do arquivo (formato: HST2025042900-MeteogramASC.out)
+                # Extrair a data do nome do arquivo (formato: HST2025042900-MeteogramASC.out ou HST2025042900-MeteogramASC.processed)
                 # onde 2025 é o ano, 04 é o mês e 29 é o dia
                 date_part = filename[3:11]  # Extrai "20250429"
                 if len(date_part) >= 8:
