@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../'
 from shared_config.config_parser import ConfigParser
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config_files.csv'))
+config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config.csv'))
 
 config_parser = ConfigParser(config_path)
 config_parser.parse()

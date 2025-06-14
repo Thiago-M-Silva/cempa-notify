@@ -550,7 +550,7 @@ if __name__ == "__main__":
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Caminho para o arquivo de configuração (2 níveis acima da pasta src)
-    config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config_files.csv'))
+    config_path = os.path.abspath(os.path.join(current_dir, '../../', 'config.csv'))
     
     print(f"Usando arquivo de configuração: {config_path}")
 

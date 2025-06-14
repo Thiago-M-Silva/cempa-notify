@@ -18,6 +18,7 @@ Sistema de alertas meteorológicos que monitora condições de temperatura e umi
     - [1. Servidor de Usuários](#1-servidor-de-usuários)
     - [2. Gerador de Alertas](#2-gerador-de-alertas)
   - [Suporte](#suporte)
+    - [Como atualizar as configurações das cidades ?](#como-atualizar-as-configurações-das-cidades-)
     - [Problemas Comuns](#problemas-comuns)
 
 ## Requisitos do Sistema
@@ -91,7 +92,7 @@ EMAIL=seu_email@gmail.com
 ```
 
 ### Alertas
-Os alertas são configurados em `config_files.csv`:
+Os alertas são configurados em `config.csv`:
 - Limiares de temperatura por cidade
 - Limiares de umidade
 - Períodos de monitoramento
@@ -116,7 +117,7 @@ cempa-notify/
 │   │   ├── routes.py        # Rotas da API
 │   │   └── ...
 │   └── database/            # Banco de dados SQLite
-├── config_files.csv         # Configurações de alertas
+├── config.csv         # Configurações de alertas
 ├── requirements.txt         # Dependências Python
 .env                    # Configurações sensíveis
 run_alertas.sh       # Script de execução
@@ -142,9 +143,14 @@ O `alert_generator.py` é o componente principal que:
 - Verifica limiares configurados
 - Gera e envia alertas
 
-Execute usando o script:
+Execute usando o script (na VM):
 ```bash
 bash run_alertas.sh
+```
+
+Execute usando (localmente):
+``` 
+poetry --directory modulo_alertas run python3 src/alert_generator.py
 ```
 
 O script:
@@ -153,6 +159,16 @@ O script:
 - Gerencia logs e erros
 
 ## Suporte
+
+### Como atualizar as configurações das cidades ?
+
+Para atualizar as configurações das cidades você deve alterar o arquivo config.csv, após alterado executar o comando na VM:
+
+```
+sudo systemctl stop cempa-notify.service && sudo systemctl start cempa-notify.service
+```
+
+Obs.: Não altere as colunas: "polygon_name" e "display_name"
 
 ### Problemas Comuns
 
@@ -164,9 +180,13 @@ O script:
 2. **Emails não são enviados**
    - Confirme se o arquivo `.env` existe e está configurado
    - Verifique se a senha de app está correta
-   - Consulte os logs para detalhes do erro
+   - Consulte os logs para detalhes do erro (cron.log)
 
 3. **Alertas não são gerados**
-   - Verifique `config_files.csv`
-   - Confirme se o servidor de usuários está rodando
-   - Consulte os logs do gerador de alertas
+   - Verifique `config.csv`
+      - Caso a temperatura máxima do mês estiver 0, o alerta não é gerado
+   - Consulte os logs do gerador de alertas (cron.log)
+
+4. **Alerta de temperatura não aparece para cadastro de uma cidade**
+   - Verifique `config.csv`
+      - Caso a temperatura máxima de qualquer mês estiver 0, a opção de temperatura não é apresentada
