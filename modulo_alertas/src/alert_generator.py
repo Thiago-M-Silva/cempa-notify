@@ -446,39 +446,37 @@ class AlertGenerator:
                 return 0
         
         alerts_sent = 0
+        today = datetime.now().strftime('%d/%m/%Y')  # Formato da data: DD/MM/YYYY
         
         for city, city_alerts in self.alerts.items():
             # Alerta de temperatura alta
             if 'temperature_high' in city_alerts:
                 alert = city_alerts['temperature_high']
-                subject = f"AVISO: Previsão de alta temperatura em {city}"
+                subject = f"AVISO: Previsão de temperaturas elevadas em {city} para o dia {today}"
                 
                 if self.alert_service:
                     try:
-                        # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Temperatura"],
-                            cities=[city]  # Usar o nome de exibição da cidade diretamente
+                            cities=[city]
                         )
-                        # Enviar email individual para cada usuário
                         for user in users:
                             try:
-                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
-                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
+                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600)
+                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600)
                                 
-                                # Gerar conteúdo do alerta usando a estratégia apropriada
                                 content = self.content_strategy.generate_temperature_content(
-                                    city,
-                                    alert['value'],
-                                    alert['threshold'],
-                                    "°C",
-                                    user.id,
-                                    True,  # is_max=True para temperatura alta
-                                    start_time['formatted'],
-                                    end_time['formatted']
+                                    cidade_nome=city,
+                                    valor=alert['value'],
+                                    threshold=alert['threshold'],
+                                    unit="°C",
+                                    user_id=user.id,
+                                    is_max=True,
+                                    start_hour=start_time['formatted'],
+                                    end_hour=end_time['formatted'],
+                                    data=today
                                 )
                                 
-                                # Enviar email para o usuário
                                 self.email_sender.send([user.email], content, subject)
                                 alerts_sent += 1
                             except Exception as e:
@@ -495,34 +493,31 @@ class AlertGenerator:
             # Alerta de temperatura baixa
             if 'temperature_low' in city_alerts:
                 alert = city_alerts['temperature_low']
-                subject = f"AVISO: Previsão de baixa temperatura em {city}"
+                subject = f"AVISO: Previsão de temperaturas baixas em {city} para o dia {today}"
                 
                 if self.alert_service:
                     try:
-                        # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Temperatura"],
-                            cities=[city]  # Usar o nome de exibição da cidade diretamente
+                            cities=[city]
                         )
-                        # Enviar email individual para cada usuário
                         for user in users:
                             try:
-                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
-                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
+                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600)
+                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600)
                                 
-                                # Gerar conteúdo do alerta usando a estratégia apropriada
                                 content = self.content_strategy.generate_temperature_content(
-                                    city,
-                                    alert['value'],
-                                    alert['threshold'],
-                                    "°C",
-                                    user.id,
-                                    False,  # is_max=False para temperatura baixa
-                                    start_time['formatted'],
-                                    end_time['formatted']
+                                    cidade_nome=city,
+                                    valor=alert['value'],
+                                    threshold=alert['threshold'],
+                                    unit="°C",
+                                    user_id=user.id,
+                                    is_max=False,
+                                    start_hour=start_time['formatted'],
+                                    end_hour=end_time['formatted'],
+                                    data=today
                                 )
                                 
-                                # Enviar email para o usuário
                                 self.email_sender.send([user.email], content, subject)
                                 alerts_sent += 1
                             except Exception as e:
@@ -539,34 +534,31 @@ class AlertGenerator:
             # Alerta de umidade baixa
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
-                subject = f"AVISO: Previsão de baixa umidade relativa do ar em {city}"
+                subject = f"AVISO: Previsão de baixa umidade relativa do ar em {city} para o dia {today}"
                 
                 if self.alert_service:
                     try:
-                        # Buscar usuários baseados na cidade e tipo de alerta
                         users = self.alert_service.get_users_by_alert_and_city(
                             alert_types=["Umidade"],
-                            cities=[city]  # Usar o nome de exibição da cidade diretamente
+                            cities=[city]
                         )
-                        # Enviar email individual para cada usuário
                         for user in users:
                             try:
-                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600) # Previsão inicial 1 hora antes
-                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600) # Previsão final 1 hora depois
+                                start_time = self.seconds_to_hhmm(alert['seconds'] - 3600)
+                                end_time = self.seconds_to_hhmm(alert['seconds'] + 3600)
                                 
-                                # Gerar conteúdo do alerta usando a estratégia apropriada
                                 content = self.content_strategy.generate_humidity_content(
-                                    city,
-                                    alert['value'],
-                                    alert['threshold'],
-                                    "%",
-                                    user.id,
-                                    False,
-                                    start_time['formatted'],
-                                    end_time['formatted']
+                                    cidade_nome=city,
+                                    valor=alert['value'],
+                                    threshold=alert['threshold'],
+                                    unit="%",
+                                    user_id=user.id,
+                                    is_max=False,
+                                    start_hour=start_time['formatted'],
+                                    end_hour=end_time['formatted'],
+                                    data=today
                                 )
                                 
-                                # Enviar email para o usuário
                                 self.email_sender.send([user.email], content, subject)
                                 alerts_sent += 1
                             except Exception as e:
@@ -675,6 +667,34 @@ class AlertGenerator:
             'formatted': f"{hours:02d}:{minutes:02d}"
         }
 
+    def create_control_file(self, meteogram_filename, error=None):
+        """
+        Cria um arquivo de controle para indicar que o processamento do dia foi concluído.
+        
+        Args:
+            meteogram_filename (str): Nome do arquivo de meteograma processado
+            error (str, optional): Mensagem de erro associada ao processamento
+            
+        Returns:
+            str: Caminho do arquivo de controle criado
+        """
+        # Obter o diretório do arquivo de meteograma
+        meteogram_dir = os.path.dirname(self.meteogram_path)
+        
+        # Criar nome do arquivo de controle (adicionar .processed ao nome original)
+        control_filename = f"{os.path.splitext(meteogram_filename)[0]}.processed"
+        control_path = os.path.join(meteogram_dir, control_filename)
+        
+        # Criar arquivo de controle com timestamp e mensagem de erro
+        with open(control_path, 'w') as f:
+            f.write(f"Processado em: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Arquivo original: {meteogram_filename}\n")
+            if error:
+                f.write(f"Erro: {error}\n")
+        
+        print(f"Arquivo de controle criado: {control_path}")
+        return control_path
+
 if __name__ == "__main__":
     import time
     start_time = time.time()
@@ -693,6 +713,15 @@ if __name__ == "__main__":
     
     meteogramPathDir = os.path.abspath(os.path.join(current_dir, '../../', 'tmp_files'))
     meteogramPath = os.path.join(meteogramPathDir, meteogram_filename)
+    
+    # Verificar se já existe arquivo de controle para este dia
+    control_filename = f"{os.path.splitext(meteogram_filename)[0]}.processed"
+    control_path = os.path.join(meteogramPathDir, control_filename)
+    
+    if os.path.exists(control_path):
+        print(f"Arquivo de controle encontrado: {control_path}")
+        print("Este arquivo já foi processado hoje. Encerrando execução.")
+        sys.exit(0)
     
     print(f"Buscando arquivo de meteograma: {meteogramPath}")
 
@@ -734,17 +763,27 @@ if __name__ == "__main__":
                 if alerts:
                     alerts_enviados = alert_gen.send_email_alerts()
                     print(f"Enviados {alerts_enviados} alertas para os destinatários cadastrados")
-            else:
-                print("Não foi possível carregar os dados do meteograma")
                 
-            print("Processamento concluído com sucesso!")
+                # Criar arquivo de controle para indicar que o processamento foi concluído com sucesso
+                alert_gen.create_control_file(meteogram_filename)
+                print("Processamento concluído com sucesso!")
+            else:
+                error_msg = "Não foi possível carregar os dados do meteograma"
+                print(error_msg)
+                # Criar arquivo de controle com erro
+                alert_gen.create_control_file(meteogram_filename, error=error_msg)
+                
         except FileNotFoundError as e:
-            print(f"ERRO FATAL: {str(e)}")
-            print("Não foi possível continuar o processamento. Verifique o arquivo de configuração.")
+            error_msg = f"ERRO FATAL: {str(e)} - Não foi possível continuar o processamento. Verifique o arquivo de configuração."
+            print(error_msg)
+            # Criar arquivo de controle com erro
+            alert_gen.create_control_file(meteogram_filename, error=error_msg)
             sys.exit(1)
         except Exception as e:
-            print(f"ERRO FATAL: {str(e)}")
-            print("Ocorreu um erro inesperado durante o processamento.")
+            error_msg = f"ERRO FATAL: {str(e)} - Ocorreu um erro inesperado durante o processamento."
+            print(error_msg)
+            # Criar arquivo de controle com erro
+            alert_gen.create_control_file(meteogram_filename, error=error_msg)
             sys.exit(1)
         finally:
             end_time = time.time()

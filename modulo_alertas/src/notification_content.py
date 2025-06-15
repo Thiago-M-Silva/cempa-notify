@@ -242,7 +242,8 @@ class NotificationContentStrategy(ABC):
     def generate_temperature_content(self, cidade_nome: str, valor: float, threshold: float, 
                                    unit: str, user_id: str, is_max: bool = True, 
                                    start_hour: Optional[str] = None,
-                                   end_hour: Optional[str] = None) -> str:
+                                   end_hour: Optional[str] = None,
+                                   data: Optional[str] = None) -> str:
         """Gera conteúdo para alerta de temperatura."""
         pass
     
@@ -250,7 +251,8 @@ class NotificationContentStrategy(ABC):
     def generate_humidity_content(self, cidade_nome: str, valor: float, threshold: float,
                                 unit: str, user_id: str, is_max: bool = True,
                                 start_hour: Optional[str] = None,
-                                end_hour: Optional[str] = None) -> str:
+                                end_hour: Optional[str] = None,
+                                data: Optional[str] = None) -> str:
         """Gera conteúdo para alerta de umidade."""
         pass
 
@@ -264,9 +266,10 @@ class EmailContentStrategy(NotificationContentStrategy):
     def generate_temperature_content(self, cidade_nome: str, valor: float, threshold: float,
                                    unit: str, user_id: str, is_max: bool = True,
                                    start_hour: Optional[str] = None,
-                                   end_hour: Optional[str] = None) -> str:
+                                   end_hour: Optional[str] = None,
+                                   data: Optional[str] = None) -> str:
         """Gera conteúdo HTML para alerta de temperatura."""
-        tipo_alerta = "alta" if is_max else "baixa"
+        tipo_alerta = "temperaturas elevadas" if is_max else "baixa temperatura"
         difference = valor - threshold
         
         recommendations_html = ""
@@ -282,15 +285,19 @@ class EmailContentStrategy(NotificationContentStrategy):
         elif end_hour:
             periodo_previsao = f"até {end_hour}"
         
+        # Adicionar data se fornecida
+        data_html = f'<p><strong>Data:</strong> {data}</p>\n' if data else ''
+        
         return f"""
         <html>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
             <div style="background-color: {'#e74c3c' if is_max else '#3498db'}; color: white; padding: 10px; text-align: center; border-radius: 5px 5px 0 0;">
-                <h2>Aviso - Previsão de {tipo_alerta} temperatura</h2>
+                <h2>Aviso - Previsão de {tipo_alerta}</h2>
             </div>
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
                 <p><strong>Temperatura:</strong> {valor:.1f}{unit}</p>
+                {data_html}
                 <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
                 
                 {recommendations_html}
@@ -309,7 +316,8 @@ class EmailContentStrategy(NotificationContentStrategy):
     def generate_humidity_content(self, cidade_nome: str, valor: float, threshold: float,
                                 unit: str, user_id: str, is_max: bool = True,
                                 start_hour: Optional[str] = None,
-                                end_hour: Optional[str] = None) -> str:
+                                end_hour: Optional[str] = None,
+                                data: Optional[str] = None) -> str:
         """Gera conteúdo HTML para alerta de umidade."""
         tipo_alerta = "acima" if is_max else "abaixo"
         
@@ -326,6 +334,9 @@ class EmailContentStrategy(NotificationContentStrategy):
         elif end_hour:
             periodo_previsao = f"até {end_hour}"
         
+        # Adicionar data se fornecida
+        data_html = f'<p><strong>Data:</strong> {data}</p>\n' if data else ''
+        
         return f"""
         <html>
         <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
@@ -335,6 +346,7 @@ class EmailContentStrategy(NotificationContentStrategy):
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
                 <p><strong>Umidade relativa do ar:</strong> {valor:.1f}{unit}</p>
+                {data_html}
                 <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
                 
                 {recommendations_html}
@@ -356,9 +368,10 @@ class SMSContentStrategy(NotificationContentStrategy):
     def generate_temperature_content(self, cidade_nome: str, valor: float, threshold: float,
                                    unit: str, user_id: str, is_max: bool = True,
                                    start_hour: Optional[str] = None,
-                                   end_hour: Optional[str] = None) -> str:
+                                   end_hour: Optional[str] = None,
+                                   data: Optional[str] = None) -> str:
         """Gera conteúdo texto para alerta de temperatura."""
-        tipo_alerta = "alta" if is_max else "baixa"
+        tipo_alerta = "temperaturas elevadas" if is_max else "baixa temperatura"
         difference = valor - threshold
         
         # Formatar o período da previsão
@@ -372,6 +385,8 @@ class SMSContentStrategy(NotificationContentStrategy):
         
         message = f"CEMPA Notify: Alerta de temperatura {tipo_alerta} em {cidade_nome}. "
         message += f"Temperatura: {valor:.1f}{unit} (limite: {threshold}{unit}). "
+        if data:
+            message += f"Data: {data}. "
         message += f"Período: {periodo_previsao}. "
         
         if is_max and difference > 0:
@@ -395,7 +410,8 @@ class SMSContentStrategy(NotificationContentStrategy):
     def generate_humidity_content(self, cidade_nome: str, valor: float, threshold: float,
                                 unit: str, user_id: str, is_max: bool = True,
                                 start_hour: Optional[str] = None,
-                                end_hour: Optional[str] = None) -> str:
+                                end_hour: Optional[str] = None,
+                                data: Optional[str] = None) -> str:
         """Gera conteúdo texto para alerta de umidade."""
         tipo_alerta = "acima" if is_max else "abaixo"
         
@@ -410,6 +426,8 @@ class SMSContentStrategy(NotificationContentStrategy):
         
         message = f"CEMPA Notify: Alerta de umidade {tipo_alerta} em {cidade_nome}. "
         message += f"Umidade: {valor:.1f}{unit} (limite: {threshold}{unit}). "
+        if data:
+            message += f"Data: {data}. "
         message += f"Período: {periodo_previsao}. "
         
         if not is_max and valor < 30:
