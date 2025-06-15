@@ -45,7 +45,7 @@ HUMIDITY_ALERTS = {
 TEMPERATURE_ALERTS = {
     "atencao_alta": {
         "range": (3, 4.9),
-        "title": "Estado de Atenção - Temperatura Alta",
+        "title": "Estado de Atenção - Temperaturas Elevadas",
         "color": "#FF9800",  # Laranja
         "recommendations": [
             "Beba bastante água ao longo do dia",
@@ -56,7 +56,7 @@ TEMPERATURE_ALERTS = {
     },
     "alerta_alta": {
         "range": (5, 6.9),
-        "title": "Estado de Alerta - Temperatura Alta",
+        "title": "Estado de Alerta - Temperaturas Elevadas",
         "color": "#FF5722",  # Laranja escuro
         "recommendations": [
             "Reduza a exposição direta ao sol, principalmente nas horas mais quentes",
@@ -68,7 +68,7 @@ TEMPERATURE_ALERTS = {
     },
     "emergencia_alta": {
         "range": (7, 30),
-        "title": "Estado de Emergência - Temperatura Alta",
+        "title": "Estado de Emergência - Temperaturas Elevadas",
         "color": "#B71C1C",  # Vermelho escuro
         "recommendations": [
             "Fique em ambientes frescos e bem ventilados sempre que possível",

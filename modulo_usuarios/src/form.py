@@ -196,7 +196,10 @@ class Form:
 <body>
     <form id="alertForm">
         <h2>CEMPA - Cadastro Avisos</h2>
-        <p>Cadastre-se para receber avisos meteorológicos por e-mail diretamente do CEMPA.</p>
+        <p>
+            Cadastre-se para receber avisos meteorológicos por e-mail diretamente do Centro de Excelência em Estudos, 
+            Monitoramento e Previsões Ambientais do Cerrada/Universidade Federal de Goiás (CEMPA).
+        </p>
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
         <div id="emailMsg" class="help-text"></div>
