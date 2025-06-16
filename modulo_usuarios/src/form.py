@@ -75,16 +75,27 @@ class Form:
     <title>CEMPA - Cadastro Avisos</title>
     <link rel="icon" href="/static/cempa_ico.png" type="image/png">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
         body {
             font-family: Arial, sans-serif;
             background: #f2f2f2;
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-sizing: border-box;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
         }
 
         form {
@@ -92,31 +103,75 @@ class Form:
             padding: 20px;
             width: 100%;
             max-width: 400px;
-            margin: 20px auto;
+            margin: 0;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            box-sizing: border-box;
         }
 
         @media (max-width: 480px) {
             body {
-                padding: 10px;
+                padding: 0;
+                min-height: 100vh;
+                height: 100vh;
+                overflow-y: auto;
             }
             
             form {
-                padding: 15px;
-                margin: 10px auto;
+                padding: 20px;
+                margin: 0;
+                min-height: 100vh;
+                border-radius: 0;
+                max-width: 100%;
             }
 
             input[type="text"],
             input[type="email"],
             select {
                 width: 100%;
-                box-sizing: border-box;
+                font-size: 16px; /* Previne zoom em iOS */
+                padding: 12px;
             }
 
             #addCityBtn {
                 width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            button[type="submit"] {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .city-block {
+                padding: 15px;
+            }
+
+            .city-block .remove-btn {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+
+            h2 {
+                font-size: 1.5em;
+                margin-bottom: 15px;
+            }
+
+            p {
+                font-size: 1em;
+                line-height: 1.4;
+                margin-bottom: 15px;
+            }
+
+            label {
+                font-size: 1em;
+                margin-top: 12px;
+            }
+
+            .help-text {
+                font-size: 0.9em;
+                margin-top: 6px;
             }
         }
 
