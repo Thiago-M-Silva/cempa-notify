@@ -3,6 +3,7 @@ from typing import Optional
 import os
 from dotenv import load_dotenv
 from pathlib import Path
+import math
 
 # Níveis de alerta de umidade e recomendações
 HUMIDITY_ALERTS = {
@@ -296,7 +297,7 @@ class EmailContentStrategy(NotificationContentStrategy):
             </div>
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
-                <p><strong>Temperatura:</strong> {valor:.1f}{unit}</p>
+                <p><strong>{'Temperatura máxima prevista' if is_max else 'Temperatura mínima prevista'}:</strong> {math.ceil(valor) if is_max else math.floor(valor)}{unit}</p>
                 {data_html}
                 <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
                 
@@ -306,7 +307,7 @@ class EmailContentStrategy(NotificationContentStrategy):
                 <p style="color: #777; font-size: 12px;">Este é um email automático do CEMPA.</p>
                 <p style="color: #777; font-size: 12px;">Por favor, não responda a este email.</p>
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="http://200.137.215.94:8081/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar-se</a>
+                    <a href="http://200.137.215.94:80/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar-se</a>
                 </div>
             </div>
         </body>
@@ -345,7 +346,7 @@ class EmailContentStrategy(NotificationContentStrategy):
             </div>
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
-                <p><strong>Umidade relativa do ar:</strong> {valor:.1f}{unit}</p>
+                <p><strong>Umidade relativa do ar prevista:</strong> {valor:.1f}{unit}</p>
                 {data_html}
                 <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
                 
@@ -355,7 +356,7 @@ class EmailContentStrategy(NotificationContentStrategy):
                 <p style="color: #777; font-size: 12px;">Este é um email automático do CEMPA.</p>
                 <p style="color: #777; font-size: 12px;">Por favor, não responda a este email.</p>
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="http://200.137.215.94:8081/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar-se</a>
+                    <a href="http://200.137.215.94:80/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar-se</a>
                 </div>
             </div>
         </body>
@@ -384,7 +385,7 @@ class SMSContentStrategy(NotificationContentStrategy):
             periodo_previsao = f"até {end_hour}"
         
         message = f"CEMPA Notify: Alerta de temperatura {tipo_alerta} em {cidade_nome}. "
-        message += f"Temperatura: {valor:.1f}{unit} (limite: {threshold}{unit}). "
+        message += f"Temperatura: {math.ceil(valor) if is_max else math.floor(valor)}{unit} (limite: {threshold}{unit}). "
         if data:
             message += f"Data: {data}. "
         message += f"Período: {periodo_previsao}. "

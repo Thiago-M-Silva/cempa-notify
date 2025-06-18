@@ -120,7 +120,7 @@ cempa-notify/
 ├── config.csv         # Configurações de alertas
 ├── requirements.txt         # Dependências Python
 .env                    # Configurações sensíveis
-run_alertas.sh       # Script de execução
+run.sh       # Script de execução
 ```
 
 ## Executando o Sistema
@@ -133,9 +133,9 @@ cd modulo_usuarios
 python -m src
 ```
 
-- Porta padrão: 8081
-- Acesse http://localhost:8081 para o formulário de cadastro
-- API disponível em http://localhost:8081/users
+- Porta padrão: 80
+- Acesse http://localhost:80 para o formulário de cadastro
+- API disponível em http://localhost:80/users
 
 ### 2. Gerador de Alertas
 O `alert_generator.py` é o componente principal que:
@@ -145,7 +145,7 @@ O `alert_generator.py` é o componente principal que:
 
 Execute usando o script (na VM):
 ```bash
-bash run_alertas.sh
+bash run.sh
 ```
 
 Execute usando (localmente):
@@ -173,7 +173,7 @@ Obs.: Não altere as colunas: "polygon_name" e "display_name"
 ### Problemas Comuns
 
 1. **Servidor não inicia**
-   - Verifique se a porta 8081 está disponível
+   - Verifique se a porta 80 está disponível
    - Confirme se o ambiente virtual está ativo
    - Verifique os logs do servidor
 
