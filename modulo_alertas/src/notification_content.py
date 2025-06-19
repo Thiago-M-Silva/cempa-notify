@@ -346,7 +346,7 @@ class EmailContentStrategy(NotificationContentStrategy):
             </div>
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
-                <p><strong>Umidade relativa do ar prevista:</strong> {valor:.1f}{unit}</p>
+                <p><strong>Umidade relativa do ar prevista:</strong> {math.floor(valor)}{unit}</p>
                 {data_html}
                 <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
                 
@@ -426,7 +426,7 @@ class SMSContentStrategy(NotificationContentStrategy):
             periodo_previsao = f"até {end_hour}"
         
         message = f"CEMPA Notify: Alerta de umidade {tipo_alerta} em {cidade_nome}. "
-        message += f"Umidade: {valor:.1f}{unit} (limite: {threshold}{unit}). "
+        message += f"Umidade: {math.floor(valor)}{unit} (limite: {threshold}{unit}). "
         if data:
             message += f"Data: {data}. "
         message += f"Período: {periodo_previsao}. "
