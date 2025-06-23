@@ -297,9 +297,9 @@ class EmailContentStrategy(NotificationContentStrategy):
             </div>
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
-                <p><strong>{'Temperatura máxima prevista' if is_max else 'Temperatura mínima prevista'}:</strong> {math.ceil(valor) if is_max else math.floor(valor)}{unit}</p>
                 {data_html}
-                <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
+                <p>{'Temperatura máxima prevista' if is_max else 'Temperatura mínima prevista'} é de <strong> {math.ceil(valor) if is_max else math.floor(valor)}{unit} </strong> no período entre <strong>{periodo_previsao}</strong></p>
+                
                 
                 {recommendations_html}
                 
@@ -346,9 +346,9 @@ class EmailContentStrategy(NotificationContentStrategy):
             </div>
             <div style="padding: 20px;">
                 <p><strong>Cidade:</strong> {cidade_nome}</p>
-                <p><strong>Umidade relativa do ar prevista:</strong> {math.floor(valor)}{unit}</p>
                 {data_html}
-                <p><strong>Período da previsão:</strong> {periodo_previsao}</p>
+                <p>A mínima umidade relativa prevista é de <strong>{math.floor(valor)}{unit}</strong> no período <strong>{periodo_previsao}</strong></p>
+                
                 
                 {recommendations_html}
                 

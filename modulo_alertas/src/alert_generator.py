@@ -12,7 +12,7 @@ from modulo_usuarios.src import create_app
 from modulo_usuarios.src.services import AlertService
 from shared_config.config_parser import ConfigParser
 
-minimum_diff_temperature_min = 1.0
+minimum_diff_temperature_min = 3.0
 
 class AlertGenerator:
     """

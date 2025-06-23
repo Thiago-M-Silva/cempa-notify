@@ -275,6 +275,45 @@ class Form:
             margin-top: 4px;
             font-style: italic;
         }
+
+        .consent-checkbox {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+
+        .consent-checkbox label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-top: 0;
+            font-size: 14px;
+            line-height: 1.4;
+            cursor: pointer;
+        }
+
+        .consent-checkbox input[type="checkbox"] {
+            width: auto;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+
+        .consent-checkbox .consent-text {
+            flex: 1;
+        }
+
+        @media (max-width: 480px) {
+            .consent-checkbox {
+                padding: 12px;
+                margin-top: 15px;
+            }
+
+            .consent-checkbox label {
+                font-size: 13px;
+            }
+        }
     </style>
 </head>
 
@@ -297,6 +336,18 @@ class Form:
         <div class="help-text">Selecione uma cidade e clique em Adicionar. Para cada cidade, escolha os tipos de avisos desejados.</div>
         <div id="cityBlocks"></div>
         <div id="errorMsg" class="error"></div>
+        
+        <div class="consent-checkbox">
+            <label>
+                <input type="checkbox" id="consentCheckbox" required>
+                <span class="consent-text">
+                    Autorizo o Centro de Excelência em Estudos, Monitoramento e Previsões Ambientais do Cerrado (CEMPA) 
+                    a enviar e-mails e notificações sobre alertas meteorológicos, novidades e comunicados pertinentes 
+                    ao funcionamento do sistema de avisos. Posso cancelar este consentimento a qualquer momento.
+                </span>
+            </label>
+        </div>
+        
         <button type="submit">Enviar</button>
     </form>
     <script>
@@ -402,6 +453,13 @@ class Form:
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 errorMsg.textContent = "Insira um email válido.";
+                return;
+            }
+            
+            // Verificar se o consentimento foi dado
+            const consentCheckbox = document.getElementById('consentCheckbox');
+            if (!consentCheckbox.checked) {
+                errorMsg.textContent = "É necessário aceitar o consentimento para envio de e-mails.";
                 return;
             }
             
