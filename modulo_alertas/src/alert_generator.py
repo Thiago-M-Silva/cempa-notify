@@ -446,13 +446,13 @@ class AlertGenerator:
                 return 0
         
         alerts_sent = 0
-        today = datetime.now().strftime('%d/%m/%Y')  # Formato da data: DD/MM/YYYY
         
         for city, city_alerts in self.alerts.items():
             # Alerta de temperatura alta
             if 'temperature_high' in city_alerts:
                 alert = city_alerts['temperature_high']
-                subject = f"AVISO: Previsão de temperaturas elevadas em {city} para o dia {today}"
+                alert_date = self.get_alert_date(alert['seconds'])
+                subject = f"AVISO: Previsão de temperaturas elevadas em {city} para o dia {alert_date}"
                 
                 if self.alert_service:
                     try:
@@ -474,7 +474,7 @@ class AlertGenerator:
                                     is_max=True,
                                     start_hour=start_time['formatted'],
                                     end_hour=end_time['formatted'],
-                                    data=today
+                                    data=alert_date
                                 )
                                 
                                 self.email_sender.send([user.email], content, subject)
@@ -493,7 +493,8 @@ class AlertGenerator:
             # Alerta de temperatura baixa
             if 'temperature_low' in city_alerts:
                 alert = city_alerts['temperature_low']
-                subject = f"AVISO: Previsão de temperaturas baixas em {city} para o dia {today}"
+                alert_date = self.get_alert_date(alert['seconds'])
+                subject = f"AVISO: Previsão de temperaturas baixas em {city} para o dia {alert_date}"
                 
                 if self.alert_service:
                     try:
@@ -515,7 +516,7 @@ class AlertGenerator:
                                     is_max=False,
                                     start_hour=start_time['formatted'],
                                     end_hour=end_time['formatted'],
-                                    data=today
+                                    data=alert_date
                                 )
                                 
                                 self.email_sender.send([user.email], content, subject)
@@ -534,7 +535,8 @@ class AlertGenerator:
             # Alerta de umidade baixa
             if 'humidity_low' in city_alerts:
                 alert = city_alerts['humidity_low']
-                subject = f"AVISO: Previsão de baixa umidade relativa do ar em {city} para o dia {today}"
+                alert_date = self.get_alert_date(alert['seconds'])
+                subject = f"AVISO: Previsão de baixa umidade relativa do ar em {city} para o dia {alert_date}"
                 
                 if self.alert_service:
                     try:
@@ -556,7 +558,7 @@ class AlertGenerator:
                                     is_max=False,
                                     start_hour=start_time['formatted'],
                                     end_hour=end_time['formatted'],
-                                    data=today
+                                    data=alert_date
                                 )
                                 
                                 self.email_sender.send([user.email], content, subject)
@@ -574,6 +576,27 @@ class AlertGenerator:
                 
         return alerts_sent
     
+    def get_alert_date(self, seconds):
+        """
+        Obtém a data completa do alerta baseada nos segundos.
+        
+        Args:
+            seconds (int): Segundos desde meia-noite em UTC-0
+            
+        Returns:
+            str: Data formatada como "DD/MM/YYYY"
+        """
+        time_info = self.seconds_to_hhmm(seconds)
+        today = datetime.now()
+        
+        # Usar o dia calculado pela função seconds_to_hhmm
+        alert_day = time_info['day']
+        
+        # Criar a data usando o dia calculado e o mês/ano atuais
+        alert_date = today.replace(day=alert_day)
+        
+        return alert_date.strftime('%d/%m/%Y')
+
     def get_alerts_summary(self):
         """
         Retorna um resumo dos alertas gerados.
@@ -601,6 +624,7 @@ class AlertGenerator:
                 summary += f"    Limite: {alert['threshold']}°C\n"
                 summary += f"    Diferença: {alert['difference']:.1f}°C\n"
                 summary += f"    Segundos: {alert['seconds']}\n"
+                summary += f"    Data: {self.get_alert_date(alert['seconds'])}\n"
                 summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])['formatted']}\n"
             
             if 'temperature_low' in city_alerts:
@@ -615,6 +639,7 @@ class AlertGenerator:
                 summary += f"    Limite: {alert['threshold']}°C\n"
                 summary += f"    Diferença: {alert['difference']:.1f}°C\n"
                 summary += f"    Segundos: {alert['seconds']}\n"
+                summary += f"    Data: {self.get_alert_date(alert['seconds'])}\n"
                 summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])['formatted']}\n"
             
             if 'humidity_low' in city_alerts:
@@ -628,13 +653,15 @@ class AlertGenerator:
                     summary += f"    Temperatura ponto de orvalho (TDave): {alert['tdave']:.1f}°C\n"
                 
                 summary += f"    Segundos: {alert['seconds']}\n"
+                summary += f"    Data: {self.get_alert_date(alert['seconds'])}\n"
                 summary += f"    Horário: {self.seconds_to_hhmm(alert['seconds'])['formatted']}\n"
         
         return summary
 
     def seconds_to_hhmm(self, seconds):
         """
-        Converte segundos para componentes de tempo (horas e minutos), ajustando de UTC-0 para UTC-3.
+        Converte segundos para componentes de tempo (horas, minutos e dia), ajustando de UTC-0 para UTC-3.
+        Calcula automaticamente o dia correto quando o horário cruza meia-noite.
         
         Args:
             seconds (int): Segundos desde meia-noite em UTC-0
@@ -644,7 +671,8 @@ class AlertGenerator:
                 {
                     'hours': int,      # Horas (0-23)
                     'minutes': int,    # Minutos (0-59)
-                    'formatted': str   # String formatada como "HH:MM"
+                    'day': int,        # Dia do mês (1-31)
+                    'formatted': str   # String formatada como "DD HH:MM"
                 }
         """
         # Converter para inteiro antes de calcular horas e minutos
@@ -653,9 +681,25 @@ class AlertGenerator:
         # Converter de UTC-0 para UTC-3 (subtrair 3 horas = 10800 segundos)
         seconds_utc3 = seconds - 10800
         
-        # Ajustar para o caso de horário negativo (virar o dia)
+        # Usar a data de hoje como base
+        today = datetime.now()
+        
+        # Calcular o dia baseado no horário resultante
         if seconds_utc3 < 0:
+            # Se cruza meia-noite (segundos_utc3 < 0), usar o dia anterior
+            from datetime import timedelta
+            previous_day = today - timedelta(days=1)
+            day = previous_day.day
             seconds_utc3 += 86400  # Adicionar 24 horas (86400 segundos)
+        elif seconds_utc3 >= 86400:
+            # Se ultrapassa 24 horas (86400 segundos), usar o próximo dia
+            from datetime import timedelta
+            next_day = today + timedelta(days=1)
+            day = next_day.day
+            seconds_utc3 -= 86400  # Subtrair 24 horas (86400 segundos)
+        else:
+            # Dentro do mesmo dia
+            day = today.day
         
         # Calcular horas e minutos
         hours = seconds_utc3 // 3600
@@ -664,6 +708,7 @@ class AlertGenerator:
         return {
             'hours': hours,
             'minutes': minutes,
+            'day': day,
             'formatted': f"{hours:02d}:{minutes:02d}"
         }
 

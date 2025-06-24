@@ -272,7 +272,7 @@ class EmailContentStrategy(NotificationContentStrategy):
                                    end_hour: Optional[str] = None,
                                    data: Optional[str] = None) -> str:
         """Gera conteúdo HTML para alerta de temperatura."""
-        tipo_alerta = "temperaturas elevadas" if is_max else "baixa temperatura"
+        tipo_alerta = "temperaturas elevadas" if is_max else "temperaturas baixas"
         difference = valor - threshold
         
         recommendations_html = ""

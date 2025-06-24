@@ -57,12 +57,13 @@ class MeteogramParser:
         self.file_path = file_path
         return self
     
-    def parse(self, max_seconds=86400, filter_state="GO"):
+    def parse(self, max_seconds=115200, min_seconds=28800, filter_state="GO"):
         """
         Processa o arquivo e extrai os dados.
         
         Args:
             max_seconds (int): Valor máximo de segundos para processar (padrão: 86400, um dia)
+            min_seconds (int): Valor mínimo de segundos para processar (padrão: 0)
             filter_state (str, optional): Filtrar apenas polígonos deste estado. Se None, não filtra por estado.
             
         Returns:
@@ -115,6 +116,13 @@ class MeteogramParser:
                         
                         # Atualizar os segundos atuais
                         self.current_seconds = seconds
+                        
+                        # Se está abaixo do limite mínimo de segundos, pular este timestamp
+                        if seconds < min_seconds:
+                            # Pular as linhas de dados deste timestamp
+                            for _ in range(self.city_count if hasattr(self, 'city_count') else 1000):
+                                f.readline()
+                            continue
                         
                         # Se ultrapassou o limite de segundos (um dia), para o processamento
                         if seconds > max_seconds:
@@ -193,6 +201,8 @@ class MeteogramParser:
         total_timestamps = len(self.seconds)
         if total_timestamps > 0:
             print(f"Intervalo de tempo: {self.seconds[0]} a {self.seconds[-1]} segundos")
+            if min_seconds > 0:
+                print(f"Dados filtrados a partir de {min_seconds} segundos")
         
         if filter_state:
             print(f"Total de polígonos encontrados: {total_polygons}")
