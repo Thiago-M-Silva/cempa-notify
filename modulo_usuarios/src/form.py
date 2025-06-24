@@ -92,9 +92,9 @@ class Form:
             background: #f2f2f2;
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
-            padding: 0;
+            padding: 20px;
             margin: 0;
         }
 
@@ -106,11 +106,13 @@ class Form:
             margin: 0;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         @media (max-width: 480px) {
             body {
-                padding: 0;
+                padding: 10px;
                 min-height: 100vh;
                 height: 100vh;
                 overflow-y: auto;
@@ -119,9 +121,11 @@ class Form:
             form {
                 padding: 20px;
                 margin: 0;
-                min-height: 100vh;
-                border-radius: 0;
+                min-height: auto;
+                max-height: calc(100vh - 20px);
+                border-radius: 8px;
                 max-width: 100%;
+                overflow-y: auto;
             }
 
             input[type="text"],
