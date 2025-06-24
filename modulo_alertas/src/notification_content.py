@@ -186,7 +186,9 @@ def get_temperature_alert_level(difference, is_max=True):
                     return level_key, level_info
             else:
                 # Para temperatura baixa, a diferença é negativa
-                if -max_val <= difference <= -min_val:
+                # Quando difference = valor - threshold e valor < threshold, difference < 0
+                # Precisamos verificar se a diferença está dentro do range definido
+                if min_val <= difference <= max_val:
                     return level_key, level_info
     
     return None, None
