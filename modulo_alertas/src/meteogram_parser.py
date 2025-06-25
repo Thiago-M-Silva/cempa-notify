@@ -57,7 +57,7 @@ class MeteogramParser:
         self.file_path = file_path
         return self
     
-    def parse(self, max_seconds=115200, min_seconds=28800, filter_state="GO"):
+    def parse(self, max_seconds=126000, min_seconds=39600, filter_state="GO"):
         """
         Processa o arquivo e extrai os dados.
         
