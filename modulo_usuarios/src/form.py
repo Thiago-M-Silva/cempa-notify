@@ -318,12 +318,35 @@ class Form:
                 font-size: 13px;
             }
         }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            max-width: 280px;
+            height: auto;
+        }
+
+        @media (max-width: 480px) {
+            .logo-container {
+                margin-bottom: 15px;
+            }
+
+            .logo-container img {
+                max-width: 220px;
+            }
+        }
     </style>
 </head>
 
 <body>
     <form id="alertForm">
-        <h2>CEMPA - Cadastro Avisos</h2>
+        <div class="logo-container">
+            <img src="/static/cempa_horizontal.png" alt="CEMPA Logo">
+        </div>
+        <h2>Cadastro de avisos</h2>
         <p>
             Cadastre-se para receber avisos meteorológicos por e-mail diretamente do Centro de Excelência em Estudos, 
             Monitoramento e Previsões Ambientais do Cerrada/Universidade Federal de Goiás (CEMPA).
