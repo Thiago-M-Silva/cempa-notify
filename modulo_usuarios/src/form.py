@@ -369,7 +369,7 @@ class Form:
                 <input type="checkbox" id="consentCheckbox" required>
                 <span class="consent-text">
                     Autorizo o Centro de Excelência em Estudos, Monitoramento e Previsões Ambientais do Cerrado (CEMPA) 
-                    a enviar e-mails e notificações sobre alertas meteorológicos, novidades e comunicados pertinentes 
+                    a enviar e-mails e notificações sobre avisos meteorológicos, novidades e comunicados pertinentes 
                     ao funcionamento do sistema de avisos. Posso cancelar este consentimento a qualquer momento.
                 </span>
             </label>
