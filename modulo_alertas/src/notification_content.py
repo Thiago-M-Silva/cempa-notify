@@ -309,7 +309,7 @@ class EmailContentStrategy(NotificationContentStrategy):
                 <p style="color: #777; font-size: 12px;">Este é um email automático do CEMPA.</p>
                 <p style="color: #777; font-size: 12px;">Por favor, não responda a este email.</p>
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="http://200.137.215.94/users/email?email={user_email}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar ou atualizar</a>
+                    <a href="http://200.137.215.94?email={user_email}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar ou atualizar</a>
                 </div>
             </div>
         </body>
@@ -317,7 +317,7 @@ class EmailContentStrategy(NotificationContentStrategy):
         """
     
     def generate_humidity_content(self, cidade_nome: str, valor: float, threshold: float,
-                                unit: str, user_id: str, is_max: bool = True,
+                                unit: str, user_email: str, is_max: bool = True,
                                 start_hour: Optional[str] = None,
                                 end_hour: Optional[str] = None,
                                 data: Optional[str] = None) -> str:
@@ -358,7 +358,7 @@ class EmailContentStrategy(NotificationContentStrategy):
                 <p style="color: #777; font-size: 12px;">Este é um email automático do CEMPA.</p>
                 <p style="color: #777; font-size: 12px;">Por favor, não responda a este email.</p>
                 <div style="text-align: center; margin-top: 20px;">
-                    <a href="http://200.137.215.94:80/users/delete/{user_id}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar ou atualizar</a>
+                    <a href="http://200.137.215.94?email={user_email}" style="background-color: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Descadastrar ou atualizar</a>
                 </div>
             </div>
         </body>
@@ -369,7 +369,7 @@ class SMSContentStrategy(NotificationContentStrategy):
     """Estratégia para geração de conteúdo em formato texto para SMS."""
     
     def generate_temperature_content(self, cidade_nome: str, valor: float, threshold: float,
-                                   unit: str, user_id: str, is_max: bool = True,
+                                   unit: str, user_email: str, is_max: bool = True,
                                    start_hour: Optional[str] = None,
                                    end_hour: Optional[str] = None,
                                    data: Optional[str] = None) -> str:
@@ -407,11 +407,11 @@ class SMSContentStrategy(NotificationContentStrategy):
             elif difference <= -3:
                 message += "Estado de Atenção! Mantenha-se aquecido."
         
-        message += f" Para descadastrar: http://200.137.215.94:8081/users/delete/{user_id}"
+        message += f" Para descadastrar: http://200.137.215.94?email={user_email}"
         return message
     
     def generate_humidity_content(self, cidade_nome: str, valor: float, threshold: float,
-                                unit: str, user_id: str, is_max: bool = True,
+                                unit: str, user_email: str, is_max: bool = True,
                                 start_hour: Optional[str] = None,
                                 end_hour: Optional[str] = None,
                                 data: Optional[str] = None) -> str:
@@ -441,7 +441,7 @@ class SMSContentStrategy(NotificationContentStrategy):
             elif valor <= 30:
                 message += "Estado de Atenção! Consuma água à vontade."
         
-        message += f" Para descadastrar: http://200.137.215.94:8081/users/delete/{user_id}"
+        message += f" Para descadastrar: http://200.137.215.94?email={user_email}"
         return message
 
 class NotificationContentFactory:
