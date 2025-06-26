@@ -72,6 +72,7 @@ class Form:
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>CEMPA - Cadastro Avisos</title>
     <link rel="icon" href="/static/cempa_ico.png" type="image/png">
     <style>
@@ -112,76 +113,194 @@ class Form:
 
         @media (max-width: 480px) {
             body {
-                padding: 10px;
+                padding: 8px;
                 min-height: 100vh;
                 height: 100vh;
                 overflow-y: auto;
+                background: #f2f2f2;
             }
             
             form {
-                padding: 20px;
+                padding: 16px;
                 margin: 0;
                 min-height: auto;
-                max-height: calc(100vh - 20px);
-                border-radius: 8px;
+                max-height: calc(100vh - 16px);
+                border-radius: 12px;
                 max-width: 100%;
                 overflow-y: auto;
+                box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+            }
+
+            .logo-container {
+                margin-bottom: 16px;
+            }
+
+            .logo-container img {
+                max-width: 180px;
+            }
+
+            h2 {
+                font-size: 1.3em;
+                margin-bottom: 12px;
+                text-align: center;
+                color: #333;
+            }
+
+            p {
+                font-size: 0.85em;
+                line-height: 1.4;
+                margin-bottom: 16px;
+                text-align: justify;
+                color: #555;
+            }
+
+            label {
+                font-size: 0.9em;
+                margin-top: 16px;
+                font-weight: 500;
+                color: #333;
             }
 
             input[type="text"],
             input[type="email"],
             select {
                 width: 100%;
-                font-size: 16px; /* Previne zoom em iOS */
-                padding: 12px;
+                font-size: 16px;
+                padding: 14px 12px;
+                margin-top: 6px;
+                border-radius: 8px;
+                border: 1px solid #ddd;
+                background-color: #fafafa;
+            }
+
+            input[type="text"]:focus,
+            input[type="email"]:focus,
+            select:focus {
+                outline: none;
+                border-color: #007bff;
+                background-color: white;
+                box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
             }
 
             #addCityBtn {
                 width: 100%;
-                padding: 12px;
+                padding: 14px;
                 font-size: 16px;
+                margin-top: 12px;
+                border-radius: 8px;
+                font-weight: 500;
             }
 
             button[type="submit"] {
                 width: 100%;
-                padding: 12px;
+                padding: 16px;
                 font-size: 16px;
+                margin-top: 20px;
+                border-radius: 8px;
+                font-weight: 500;
             }
 
             .city-block {
-                padding: 15px;
+                padding: 16px;
+                margin-top: 12px;
+                margin-bottom: 12px;
+                border-radius: 10px;
+                background: #f8f9fa;
+                border: 1px solid #e9ecef;
+            }
+
+            .city-block strong {
+                font-size: 1.1em;
+                display: block;
+                margin-bottom: 12px;
+                color: #333;
             }
 
             .city-block .remove-btn {
                 padding: 8px 12px;
-                font-size: 14px;
+                font-size: 12px;
+                border-radius: 6px;
+                position: absolute;
+                right: 12px;
+                top: 12px;
             }
 
-            h2 {
-                font-size: 1.5em;
-                margin-bottom: 15px;
+            .checkbox-group {
+                margin: 12px 0;
             }
 
-            p {
-                font-size: 1em;
-                line-height: 1.4;
-                margin-bottom: 15px;
+            .checkbox-group label {
+                display: block;
+                margin: 10px 0;
+                font-size: 0.9em;
+                padding: 8px 0;
             }
 
-            label {
-                font-size: 1em;
-                margin-top: 12px;
+            .checkbox-group input[type="checkbox"] {
+                margin-right: 8px;
+                transform: scale(1.2);
             }
 
             .help-text {
-                font-size: 0.9em;
-                margin-top: 6px;
+                font-size: 0.8em;
+                margin-top: 8px;
+                color: #666;
+                line-height: 1.3;
+                font-style: italic;
             }
 
             #removeAllCitiesBtn {
                 width: 100%;
-                padding: 12px;
+                padding: 14px;
                 font-size: 16px;
+                border-radius: 8px;
+                font-weight: 500;
+            }
+
+            #unsubscribeBtn {
+                width: 100%;
+                padding: 14px;
+                font-size: 16px;
+                border-radius: 8px;
+                font-weight: 500;
+            }
+
+            .consent-checkbox {
+                padding: 16px;
+                margin-top: 20px;
+                border-radius: 10px;
+                background: #f8f9fa;
+                border-left: 4px solid #007bff;
+            }
+
+            .consent-checkbox label {
+                font-size: 0.8em;
+                line-height: 1.4;
+                margin-top: 0;
+            }
+
+            .consent-checkbox input[type="checkbox"] {
+                transform: scale(1.2);
+                margin-right: 10px;
+            }
+
+            .error {
+                color: red;
+                font-size: 0.9em;
+                min-height: 0;
+                margin: 0;
+                padding: 0;
+                display: none;
+            }
+
+            .error:not(:empty) {
+                display: block;
+                margin-top: 8px;
+                padding: 10px;
+                border-radius: 6px;
+                background-color: #f8d7da;
+                border: 1px solid #f5c6cb;
+                color: #721c24;
             }
         }
 
@@ -243,11 +362,6 @@ class Form:
         .checkbox-group label {
             display: inline-block;
             margin-right: 10px;
-        }
-
-        .error {
-            color: red;
-            font-size: 0.9em;
         }
 
         button[type="submit"] {
