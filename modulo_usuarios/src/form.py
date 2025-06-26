@@ -118,17 +118,67 @@ class Form:
                 height: 100vh;
                 overflow-y: auto;
                 background: #f2f2f2;
+                -webkit-overflow-scrolling: touch; /* Melhor scroll no iOS */
             }
             
             form {
                 padding: 16px;
                 margin: 0;
                 min-height: auto;
-                max-height: calc(100vh - 16px);
+                max-height: none; /* Remover limite de altura */
                 border-radius: 12px;
                 max-width: 100%;
-                overflow-y: auto;
+                overflow-y: visible; /* Permitir que o conteúdo flua naturalmente */
                 box-shadow: 0 2px 15px rgba(0, 0, 0, 0.15);
+                margin-bottom: 20px; /* Espaço extra no final */
+            }
+
+            /* Garantir que o body tenha scroll suave */
+            html {
+                scroll-behavior: smooth;
+            }
+
+            /* Melhorar acessibilidade dos botões */
+            button[type="submit"] {
+                width: 100%;
+                padding: 16px;
+                font-size: 16px;
+                margin-top: 20px;
+                margin-bottom: 10px; /* Espaço extra após o botão */
+                border-radius: 8px;
+                font-weight: 500;
+                position: relative;
+                z-index: 10; /* Garantir que fique visível */
+            }
+
+            #unsubscribeBtn {
+                width: 100%;
+                padding: 14px;
+                font-size: 16px;
+                border-radius: 8px;
+                font-weight: 500;
+                margin-bottom: 10px; /* Espaço extra após o botão */
+                position: relative;
+                z-index: 10;
+            }
+
+            /* Melhorar espaçamento geral */
+            .consent-checkbox {
+                padding: 16px;
+                margin-top: 20px;
+                margin-bottom: 15px; /* Espaço extra antes do botão */
+                border-radius: 10px;
+                background: #f8f9fa;
+                border-left: 4px solid #007bff;
+            }
+
+            /* Garantir que o container do botão de descadastrar seja visível */
+            #unsubscribeContainer {
+                margin-top: 15px;
+                margin-bottom: 10px;
+                text-align: center;
+                position: relative;
+                z-index: 10;
             }
 
             .logo-container {
@@ -284,23 +334,164 @@ class Form:
                 margin-right: 10px;
             }
 
-            .error {
-                color: red;
-                font-size: 0.9em;
-                min-height: 0;
-                margin: 0;
-                padding: 0;
-                display: none;
+            .consent-checkbox .consent-text {
+                flex: 1;
             }
 
-            .error:not(:empty) {
-                display: block;
-                margin-top: 8px;
-                padding: 10px;
-                border-radius: 6px;
-                background-color: #f8d7da;
-                border: 1px solid #f5c6cb;
-                color: #721c24;
+            @media (max-width: 480px) {
+                .consent-checkbox {
+                    padding: 12px;
+                    margin-top: 15px;
+                }
+
+                .consent-checkbox label {
+                    font-size: 13px;
+                }
+            }
+
+            .logo-container {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            .logo-container img {
+                max-width: 280px;
+                height: auto;
+            }
+
+            @media (max-width: 480px) {
+                .logo-container {
+                    margin-bottom: 15px;
+                }
+
+                .logo-container img {
+                    max-width: 220px;
+                }
+            }
+
+            button[type="submit"] {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            #removeAllCitiesBtn {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+
+            .city-block {
+            }
+
+            /* Modal customizado */
+            .custom-modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(2px);
+            }
+
+            .modal-content {
+                background-color: white;
+                margin: 15% auto;
+                padding: 20px;
+                border-radius: 8px;
+                width: 90%;
+                max-width: 400px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+                animation: modalSlideIn 0.3s ease-out;
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .modal-title {
+                font-size: 18px;
+                font-weight: bold;
+                margin-bottom: 15px;
+                color: #333;
+            }
+
+            .modal-message {
+                font-size: 14px;
+                margin-bottom: 20px;
+                color: #666;
+                line-height: 1.4;
+            }
+
+            .modal-buttons {
+                display: flex;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .modal-btn {
+                padding: 10px 20px;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 14px;
+                min-width: 80px;
+            }
+
+            .modal-btn-primary {
+                background-color: #007bff;
+                color: white;
+            }
+
+            .modal-btn-primary:hover {
+                background-color: #0056b3;
+            }
+
+            .modal-btn-danger {
+                background-color: #dc3545;
+                color: white;
+            }
+
+            .modal-btn-danger:hover {
+                background-color: #b52a37;
+            }
+
+            .modal-btn-secondary {
+                background-color: #6c757d;
+                color: white;
+            }
+
+            .modal-btn-secondary:hover {
+                background-color: #545b62;
+            }
+
+            @media (max-width: 480px) {
+                .modal-content {
+                    margin: 20% auto;
+                    width: 95%;
+                    padding: 25px 20px;
+                }
+
+                .modal-buttons {
+                    flex-direction: column;
+                }
+
+                .modal-btn {
+                    width: 100%;
+                    padding: 12px;
+                    font-size: 16px;
+                }
             }
         }
 
@@ -362,6 +553,25 @@ class Form:
         .checkbox-group label {
             display: inline-block;
             margin-right: 10px;
+        }
+
+        .error {
+            color: red;
+            font-size: 0.9em;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            display: none;
+        }
+
+        .error:not(:empty) {
+            display: block;
+            margin-top: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
         }
 
         button[type="submit"] {
