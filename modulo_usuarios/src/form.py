@@ -399,6 +399,116 @@ class Form:
 
         .city-block {
         }
+
+        /* Modal customizado */
+        .custom-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+
+        .modal-message {
+            font-size: 14px;
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            min-width: 80px;
+        }
+
+        .modal-btn-primary {
+            background-color: #007bff;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .modal-btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background-color: #b52a37;
+        }
+
+        .modal-btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #545b62;
+        }
+
+        @media (max-width: 480px) {
+            .modal-content {
+                margin: 20% auto;
+                width: 95%;
+                padding: 25px 20px;
+            }
+
+            .modal-buttons {
+                flex-direction: column;
+            }
+
+            .modal-btn {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
+        }
     </style>
 </head>
 
@@ -440,16 +550,77 @@ class Form:
             </label>
         </div>
         
-        <button type="submit" id="submitBtn">Enviar</button>
+        <button type="submit" id="submitBtn">Cadastrar</button>
         <div id="unsubscribeContainer" style="display: none; margin-top: 15px; text-align: center;">
             <button type="button" id="unsubscribeBtn" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px; width: 100%;">
                 Descadastrar
             </button>
         </div>
     </form>
+
+    <!-- Modal customizado -->
+    <div id="customModal" class="custom-modal">
+        <div class="modal-content">
+            <div class="modal-title" id="modalTitle"></div>
+            <div class="modal-message" id="modalMessage"></div>
+            <div class="modal-buttons" id="modalButtons">
+                <button class="modal-btn modal-btn-primary" id="modalOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const cityBlocks = {};
         let isEditing = false;
+
+        // Funções para o modal customizado
+        function showModal(title, message, buttons = ['OK']) {
+            const modal = document.getElementById('customModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalMessage = document.getElementById('modalMessage');
+            const modalButtons = document.getElementById('modalButtons');
+            
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            
+            // Limpar botões existentes
+            modalButtons.innerHTML = '';
+            
+            // Adicionar botões
+            buttons.forEach((button, index) => {
+                const btn = document.createElement('button');
+                btn.textContent = button.text || button;
+                btn.className = 'modal-btn';
+                
+                if (button.type === 'danger') {
+                    btn.classList.add('modal-btn-danger');
+                } else if (button.type === 'secondary') {
+                    btn.classList.add('modal-btn-secondary');
+                } else {
+                    btn.classList.add('modal-btn-primary');
+                }
+                
+                btn.onclick = () => {
+                    hideModal();
+                    if (button.onClick) button.onClick();
+                };
+                
+                modalButtons.appendChild(btn);
+            });
+            
+            modal.style.display = 'block';
+        }
+        
+        function hideModal() {
+            document.getElementById('customModal').style.display = 'none';
+        }
+        
+        // Fechar modal ao clicar fora dele
+        document.getElementById('customModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideModal();
+            }
+        });
 
         // Função para criar um bloco de cidade
         function createCityBlock(city, selectedTypes = []) {
@@ -638,7 +809,10 @@ class Form:
                 
                 const data = await res.json();
                 if (res.status === 201 || res.status === 200) {
-                    alert(isEditing ? 'Usuário atualizado com sucesso!' : 'Usuário cadastrado com sucesso!');
+                    showModal(
+                        'Sucesso!', 
+                        isEditing ? 'Usuário atualizado com sucesso!' : 'Usuário cadastrado com sucesso!'
+                    );
                     document.getElementById('alertForm').reset();
                     document.getElementById('cityBlocks').innerHTML = '';
                     document.getElementById('errorMsg').textContent = '';
@@ -669,11 +843,22 @@ class Form:
 
         // Adicionar evento para o botão de remover todas as cidades
         document.getElementById('removeAllCitiesBtn').addEventListener('click', function() {
-            if (confirm('Tem certeza que deseja remover todas as cidades?')) {
-                document.getElementById('cityBlocks').innerHTML = '';
-                for (const key in cityBlocks) delete cityBlocks[key];
-                updateRemoveAllButton();
-            }
+            showModal(
+                'Confirmar ação',
+                'Tem certeza que deseja remover todas as cidades?',
+                [
+                    { text: 'Cancelar', type: 'secondary' },
+                    { 
+                        text: 'Remover', 
+                        type: 'danger',
+                        onClick: function() {
+                            document.getElementById('cityBlocks').innerHTML = '';
+                            for (const key in cityBlocks) delete cityBlocks[key];
+                            updateRemoveAllButton();
+                        }
+                    }
+                ]
+            );
         });
 
         window.removeCityBlock = function(city) {
@@ -711,28 +896,41 @@ class Form:
         document.getElementById('unsubscribeBtn').addEventListener('click', async function() {
             const email = document.getElementById('email').value.trim();
             if (!email) return;
-            if (!confirm('Tem certeza que deseja descadastrar este email?')) return;
-            try {
-                const currentUrl = window.location.origin;
-                const res = await fetch(`${currentUrl}/users/email?email=${encodeURIComponent(email)}`, {
-                    method: 'DELETE'
-                });
-                if (res.status === 200) {
-                    alert('Usuário descadastrado com sucesso.');
-                    document.getElementById('alertForm').reset();
-                    document.getElementById('cityBlocks').innerHTML = '';
-                    document.getElementById('errorMsg').textContent = '';
-                    for (const key in cityBlocks) delete cityBlocks[key];
-                    isEditing = false;
-                    updateRemoveAllButton();
-                    document.getElementById('submitBtn').textContent = 'Cadastrar';
-                    document.getElementById('unsubscribeContainer').style.display = 'none';
-                } else {
-                    alert('Erro ao descadastrar usuário.');
-                }
-            } catch (err) {
-                alert('Erro na comunicação com o servidor.');
-            }
+            
+            showModal(
+                'Confirmar descadastro',
+                'Tem certeza que deseja descadastrar este email?',
+                [
+                    { text: 'Cancelar', type: 'secondary' },
+                    { 
+                        text: 'Descadastrar', 
+                        type: 'danger',
+                        onClick: async function() {
+                            try {
+                                const currentUrl = window.location.origin;
+                                const res = await fetch(`${currentUrl}/users/email?email=${encodeURIComponent(email)}`, {
+                                    method: 'DELETE'
+                                });
+                                if (res.status === 200) {
+                                    showModal('Sucesso!', 'Usuário descadastrado com sucesso.');
+                                    document.getElementById('alertForm').reset();
+                                    document.getElementById('cityBlocks').innerHTML = '';
+                                    document.getElementById('errorMsg').textContent = '';
+                                    for (const key in cityBlocks) delete cityBlocks[key];
+                                    isEditing = false;
+                                    updateRemoveAllButton();
+                                    document.getElementById('submitBtn').textContent = 'Cadastrar';
+                                    document.getElementById('unsubscribeContainer').style.display = 'none';
+                                } else {
+                                    showModal('Erro', 'Erro ao descadastrar usuário.');
+                                }
+                            } catch (err) {
+                                showModal('Erro', 'Erro na comunicação com o servidor.');
+                            }
+                        }
+                    }
+                ]
+            );
         });
     </script>
 </body>
