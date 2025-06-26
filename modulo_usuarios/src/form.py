@@ -177,6 +177,12 @@ class Form:
                 font-size: 0.9em;
                 margin-top: 6px;
             }
+
+            #removeAllCitiesBtn {
+                width: 100%;
+                padding: 12px;
+                font-size: 16px;
+            }
         }
 
         label {
@@ -190,7 +196,7 @@ class Form:
 
         input[type="text"],
         input[type="email"] {
-            width: 90%;
+            width: 100%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -198,7 +204,7 @@ class Form:
         }
 
         select {
-            width: 90%;
+            width: 100%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -266,11 +272,51 @@ class Form:
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            width: 90%;
+            width: 100%;
         }
 
         #addCityBtn:hover {
             background: #0056b3;
+        }
+
+        #removeAllCitiesBtn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 90%;
+        }
+
+        #removeAllCitiesBtn:hover {
+            background: #b52a37;
+        }
+
+        #removeAllCitiesContainer {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        #unsubscribeContainer {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        #unsubscribeBtn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 14px;
+            width: 100%;
+        }
+
+        #unsubscribeBtn:hover {
+            background: #b52a37;
         }
 
         .help-text {
@@ -338,6 +384,21 @@ class Form:
                 max-width: 220px;
             }
         }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        #removeAllCitiesBtn {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+        }
+
+        .city-block {
+        }
     </style>
 </head>
 
@@ -353,7 +414,6 @@ class Form:
         </p>
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required>
-        <div id="emailMsg" class="help-text"></div>
         <label for="nome">Nome:</label>
         <input type="text" id="nome" name="nome" required>
         <label for="cidadeSelect">Adicionar cidade:</label>
@@ -362,6 +422,11 @@ class Form:
         <button type="button" id="addCityBtn">Adicionar cidade</button>
         <div class="help-text">Selecione uma cidade e clique em Adicionar. Para cada cidade, escolha os tipos de avisos desejados.</div>
         <div id="cityBlocks"></div>
+        <div id="removeAllCitiesContainer" style="display: none; margin-top: 10px; text-align: center;">
+            <button type="button" id="removeAllCitiesBtn" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer; font-size: 14px;">
+                Remover todas as cidades
+            </button>
+        </div>
         <div id="errorMsg" class="error"></div>
         
         <div class="consent-checkbox">
@@ -375,7 +440,12 @@ class Form:
             </label>
         </div>
         
-        <button type="submit">Enviar</button>
+        <button type="submit" id="submitBtn">Enviar</button>
+        <div id="unsubscribeContainer" style="display: none; margin-top: 15px; text-align: center;">
+            <button type="button" id="unsubscribeBtn" style="background: #dc3545; color: white; border: none; border-radius: 4px; padding: 10px 20px; cursor: pointer; font-size: 14px; width: 100%;">
+                Descadastrar
+            </button>
+        </div>
     </form>
     <script>
         const cityBlocks = {};
@@ -416,6 +486,21 @@ class Form:
             `;
             document.getElementById('cityBlocks').appendChild(block);
             cityBlocks[city] = block;
+            
+            // Mostrar o botão de remover todas as cidades se houver pelo menos uma cidade
+            updateRemoveAllButton();
+        }
+
+        // Função para atualizar a visibilidade do botão de remover todas as cidades
+        function updateRemoveAllButton() {
+            const removeAllContainer = document.getElementById('removeAllCitiesContainer');
+            const cityBlocksCount = Object.keys(cityBlocks).length;
+            
+            if (cityBlocksCount > 0) {
+                removeAllContainer.style.display = 'block';
+            } else {
+                removeAllContainer.style.display = 'none';
+            }
         }
 
         // Função para preencher o formulário com os dados do usuário
@@ -435,24 +520,38 @@ class Form:
                     // Preencher nome apenas se usuário for encontrado
                     document.getElementById('nome').value = userData.username;
                     
-                    // Criar blocos para cada alerta
+                    // Agrupar alertas por cidade
+                    const cityAlerts = {};
                     userData.alerts.forEach(alert => {
-                        createCityBlock(alert.city, alert.types);
+                        if (!cityAlerts[alert.city]) {
+                            cityAlerts[alert.city] = [];
+                        }
+                        // Cada alert.types é um array com um elemento, então usamos o primeiro
+                        const alertType = alert.types[0];
+                        if (!cityAlerts[alert.city].includes(alertType)) {
+                            cityAlerts[alert.city].push(alertType);
+                        }
+                    });
+                    
+                    // Criar blocos para cada cidade com seus tipos agrupados
+                    Object.keys(cityAlerts).forEach(city => {
+                        createCityBlock(city, cityAlerts[city]);
                     });
                     
                     // Marcar como edição
                     isEditing = true;
-                    document.getElementById('emailMsg').textContent = 'Usuário encontrado. Você pode editar os avisos.';
-                    document.getElementById('emailMsg').style.color = '#28a745';
+                    // Alterar texto do botão principal e mostrar botão de descadastrar
+                    document.getElementById('submitBtn').textContent = 'Atualizar';
+                    document.getElementById('unsubscribeContainer').style.display = 'block';
                 } else if (response.status === 404) {
-                    // Limpar mensagem se o usuário não for encontrado
-                    document.getElementById('emailMsg').textContent = 'Email não cadastrado. Preencha o formulário para se cadastrar.';
-                    document.getElementById('emailMsg').style.color = '#666';
+                    // Alterar texto do botão principal e esconder botão de descadastrar
+                    document.getElementById('submitBtn').textContent = 'Cadastrar';
+                    document.getElementById('unsubscribeContainer').style.display = 'none';
                 }
             } catch (error) {
                 console.error('Erro ao buscar usuário:', error);
-                document.getElementById('emailMsg').textContent = 'Erro ao verificar email.';
-                document.getElementById('emailMsg').style.color = '#dc3545';
+                document.getElementById('errorMsg').textContent = 'Erro ao verificar email.';
+                document.getElementById('errorMsg').style.color = '#dc3545';
             }
         }
 
@@ -542,9 +641,12 @@ class Form:
                     alert(isEditing ? 'Usuário atualizado com sucesso!' : 'Usuário cadastrado com sucesso!');
                     document.getElementById('alertForm').reset();
                     document.getElementById('cityBlocks').innerHTML = '';
-                    document.getElementById('emailMsg').textContent = '';
+                    document.getElementById('errorMsg').textContent = '';
                     for (const key in cityBlocks) delete cityBlocks[key];
                     isEditing = false;
+                    updateRemoveAllButton();
+                    document.getElementById('submitBtn').textContent = 'Cadastrar';
+                    document.getElementById('unsubscribeContainer').style.display = 'none';
                 } else {
                     errorMsg.textContent = isEditing ? 'Erro ao atualizar usuário.' : 'Erro ao cadastrar usuário.';
                 }
@@ -565,13 +667,73 @@ class Form:
             createCityBlock(city);
         });
 
+        // Adicionar evento para o botão de remover todas as cidades
+        document.getElementById('removeAllCitiesBtn').addEventListener('click', function() {
+            if (confirm('Tem certeza que deseja remover todas as cidades?')) {
+                document.getElementById('cityBlocks').innerHTML = '';
+                for (const key in cityBlocks) delete cityBlocks[key];
+                updateRemoveAllButton();
+            }
+        });
+
         window.removeCityBlock = function(city) {
             const block = cityBlocks[city];
             if (block) {
                 block.remove();
                 delete cityBlocks[city];
+                updateRemoveAllButton();
             }
         }
+
+        // Função para obter parâmetros da URL
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Verificar se há email na URL e preencher automaticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            const emailFromUrl = getUrlParameter('email');
+            if (emailFromUrl) {
+                const emailField = document.getElementById('email');
+                emailField.value = emailFromUrl;
+                
+                // Validar o email e buscar dados do usuário
+                if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailFromUrl)) {
+                    fillUserData(emailFromUrl);
+                }
+            }
+        });
+
+        // Adicionar evento para o botão de descadastrar
+        document.getElementById('unsubscribeBtn').addEventListener('click', async function() {
+            const email = document.getElementById('email').value.trim();
+            if (!email) return;
+            if (!confirm('Tem certeza que deseja descadastrar este email?')) return;
+            try {
+                const currentUrl = window.location.origin;
+                const res = await fetch(`${currentUrl}/users/email?email=${encodeURIComponent(email)}`, {
+                    method: 'DELETE'
+                });
+                if (res.status === 200) {
+                    alert('Usuário descadastrado com sucesso.');
+                    document.getElementById('alertForm').reset();
+                    document.getElementById('cityBlocks').innerHTML = '';
+                    document.getElementById('errorMsg').textContent = '';
+                    for (const key in cityBlocks) delete cityBlocks[key];
+                    isEditing = false;
+                    updateRemoveAllButton();
+                    document.getElementById('submitBtn').textContent = 'Cadastrar';
+                    document.getElementById('unsubscribeContainer').style.display = 'none';
+                } else {
+                    alert('Erro ao descadastrar usuário.');
+                }
+            } catch (err) {
+                alert('Erro na comunicação com o servidor.');
+            }
+        });
     </script>
 </body>
 

@@ -122,3 +122,18 @@ def get_user_by_email():
         return make_response(jsonify(user.json_public()), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
+
+@bp.route('/users/email', methods=['DELETE'])
+def delete_user_by_email():
+    """
+    Deleta um usuário pelo email.
+    Exemplo: DELETE /users/email?email=usuario@exemplo.com
+    """
+    email = request.args.get('email')
+    if not email:
+        return make_response(jsonify({'error': 'Email é obrigatório'}), 400)
+    success = UserService.delete_by_email(email)
+    if success:
+        return make_response(jsonify({'message': 'Usuário descadastrado com sucesso.'}), 200)
+    else:
+        return make_response(jsonify({'error': 'Usuário não encontrado'}), 404)

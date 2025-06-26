@@ -148,6 +148,20 @@ class UserService:
             db.session.rollback()
             return None
 
+    @staticmethod
+    def delete_by_email(email):
+        try:
+            user = UserService.get_user_by_email(email)
+            if user:
+                db.session.delete(user)
+                db.session.commit()
+                return True
+            return False
+        except Exception as e:
+            print(f"Error deleting user by email: {e}")
+            db.session.rollback()
+            return False
+
 class AlertService:
     @staticmethod
     def get_users_by_alert_and_city(alert_types=None, cities=None):
