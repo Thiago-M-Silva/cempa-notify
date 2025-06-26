@@ -637,9 +637,9 @@ class Form:
             Monitoramento e Previsões Ambientais do Cerrada/Universidade Federal de Goiás (CEMPA).
         </p>
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required>
+        <input type="email" id="email" name="email" autocomplete="email" required>
         <label for="nome">Nome:</label>
-        <input type="text" id="nome" name="nome" required>
+        <input type="text" id="nome" name="nome" autocomplete="name" required>
         <label for="cidadeSelect">Adicionar cidade:</label>
         <select id="cidadeSelect">
 {city_options}        </select>
