@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from datetime import datetime, timedelta
 from meteogram_parser import MeteogramParser
-from sendEmail import EmailSender
+from send_email import EmailSender
 from notification_content import NotificationContentFactory
 from file_utils import clean_old_files, download_meteogram_file
 import sys

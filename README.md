@@ -110,7 +110,10 @@ cempa-notify/
 ├── modulo_alertas/           # Módulo de geração e envio de alertas
 │   ├── src/
 │   │   ├── alert_generator.py    # Gerador principal de alertas
-│   │   └── ...
+│   │   ├── notification_content.py  # Conteúdo das notificações
+│   │   ├── meteogram_parser.py   # Parser de meteogramas
+│   │   ├── file_utils.py        # Utilitários para manipulação de arquivos
+│   │   ├── send_email.py         # Envio de emails
 ├── modulo_usuarios/          # Módulo de gerenciamento de usuários
 │   ├── src/
 │   │   ├── models.py        # Modelos do banco de dados

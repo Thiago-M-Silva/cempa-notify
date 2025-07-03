@@ -46,72 +46,92 @@ HUMIDITY_ALERTS = {
 TEMPERATURE_ALERTS = {
     "atencao_alta": {
         "range": (3, 4.9),
-        "title": "Estado de Atenção - Temperaturas Elevadas",
+        "title": "Aviso - Temperaturas Elevadas",
         "color": "#FF9800",  # Laranja
         "recommendations": [
-            "Beba bastante água ao longo do dia",
+            "Beba bastante água, mesmo sem sentir sede", 
             "Prefira roupas leves e claras",
-            "Evite atividades físicas ao ar livre entre 10h e 16h",
-            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas"
+            "Evite atividades físicas ao ar livre no período previsto de temperatura máxima elevada",
+            "Reduza a exposição direta ao sol, principalmente nas horas mais quentes, use protetor solar",
+            "Fique em ambientes frescos e bem ventilados sempre que possível",
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas",
+            "Monitore familiares e vizinhos em situação de vulnerabilidade",
+            "Evite refeições pesadas e bebidas alcoólicas",
+            "Esteja atento a sinais como tontura, dor de cabeça ou cansaço excessivo. Em caso de mal-estar intenso, procure atendimento médico imediatamente"
         ]
     },
     "alerta_alta": {
         "range": (5, 6.9),
-        "title": "Estado de Alerta - Temperaturas Elevadas",
+        "title": "Aviso - Temperaturas Elevadas",
         "color": "#FF5722",  # Laranja escuro
         "recommendations": [
-            "Reduza a exposição direta ao sol, principalmente nas horas mais quentes",
-            "Hidrate-se com maior frequência, mesmo sem sentir sede",
-            "Mantenha os ambientes bem ventilados",
+            "Beba bastante água, mesmo sem sentir sede", 
+            "Prefira roupas leves e claras",
+            "Evite atividades físicas ao ar livre no período previsto de temperatura máxima elevada",
+            "Reduza a exposição direta ao sol, principalmente nas horas mais quentes, use protetor solar",
+            "Fique em ambientes frescos e bem ventilados sempre que possível",
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas",
+            "Monitore familiares e vizinhos em situação de vulnerabilidade",
             "Evite refeições pesadas e bebidas alcoólicas",
-            "Esteja atento a sinais como tontura, dor de cabeça ou cansaço excessivo"
+            "Esteja atento a sinais como tontura, dor de cabeça ou cansaço excessivo. Em caso de mal-estar intenso, procure atendimento médico imediatamente"
         ]
     },
     "emergencia_alta": {
         "range": (7, 30),
-        "title": "Estado de Emergência - Temperaturas Elevadas",
+        "title": "Aviso - Temperaturas Elevadas",
         "color": "#B71C1C",  # Vermelho escuro
         "recommendations": [
+            "Beba bastante água, mesmo sem sentir sede", 
+            "Prefira roupas leves e claras",
+            "Evite atividades físicas ao ar livre no período previsto de temperatura máxima elevada",
+            "Reduza a exposição direta ao sol, principalmente nas horas mais quentes, use protetor solar",
             "Fique em ambientes frescos e bem ventilados sempre que possível",
-            "Aumente a ingestão de água e evite sair ao ar livre durante o pico do calor",
-            "Use protetor solar e chapéus se precisar sair",
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas",
             "Monitore familiares e vizinhos em situação de vulnerabilidade",
-            "Em caso de mal-estar intenso, procure atendimento médico imediatamente"
+            "Evite refeições pesadas e bebidas alcoólicas",
+            "Esteja atento a sinais como tontura, dor de cabeça ou cansaço excessivo. Em caso de mal-estar intenso, procure atendimento médico imediatamente"
         ]
     },
     "atencao_baixa": {
         "range": (-4.9, -3),
-        "title": "Estado de Atenção - Temperatura Baixa",
+        "title": "Aviso - Previsão de Temperatura Mínima Baixa",
         "color": "#2196F3",  # Azul
         "recommendations": [
-            "Use roupas adequadas para o frio",
-            "Mantenha os ambientes aquecidos",
-            "Evite exposição prolongada ao frio",
-            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas"
+            "Mantenha-se hidratado, não deixe de beber àgua",
+            "Busque se agasalhar bem",
+            "Evite tomar banhos com àgua muito quente", 
+            "Mantenha a pele sempre hidratada",
+            "Proteja-se do frio, mas tente manter o ambiente arejado",
+            "Mantenha-se seco e evite arrefecer com a roupa transpirada no corpo", 
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas no período de mínimas temperaturas"
         ]
     },
     "alerta_baixa": {
         "range": (-6.9, -5),
-        "title": "Estado de Alerta - Temperatura Baixa",
+        "title": "Aviso - Previsão de Temperatura Mínima Baixa",
         "color": "#1976D2",  # Azul escuro
         "recommendations": [
-            "Use roupas em camadas para melhor proteção térmica",
-            "Mantenha portas e janelas fechadas para preservar o calor",
-            "Evite atividades ao ar livre nas horas mais frias",
-            "Mantenha-se hidratado com bebidas quentes",
-            "Esteja atento a sinais como tremores, dormência ou alteração na cor da pele"
+            "Mantenha-se hidratado, não deixe de beber àgua",
+            "Busque se agasalhar bem",
+            "Evite tomar banhos com àgua muito quente", 
+            "Mantenha a pele sempre hidratada",
+            "Proteja-se do frio, mas tente manter o ambiente arejado",
+            "Mantenha-se seco e evite arrefecer com a roupa transpirada no corpo", 
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas no período de mínimas temperaturas"
         ]
     },
     "emergencia_baixa": {
         "range": (-30, -7),
-        "title": "Estado de Emergência - Temperatura Baixa",
+        "title": "Aviso - Previsão de Temperatura Mínima Baixa",
         "color": "#0D47A1",  # Azul muito escuro
         "recommendations": [
-            "Evite sair ao ar livre, exceto em casos de extrema necessidade",
-            "Mantenha os ambientes aquecidos e bem isolados",
-            "Use roupas adequadas e em camadas",
-            "Monitore familiares e vizinhos em situação de vulnerabilidade",
-            "Em caso de hipotermia (tremores intensos, confusão mental, sonolência), procure atendimento médico imediatamente"
+            "Mantenha-se hidratado, não deixe de beber àgua",
+            "Busque se agasalhar bem",
+            "Evite tomar banhos com àgua muito quente", 
+            "Mantenha a pele sempre hidratada",
+            "Proteja-se do frio, mas tente manter o ambiente arejado",
+            "Mantenha-se seco e evite arrefecer com a roupa transpirada no corpo", 
+            "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas no período de mínimas temperaturas"
         ]
     }
 }
