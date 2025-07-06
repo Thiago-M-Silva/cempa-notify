@@ -46,7 +46,7 @@ HUMIDITY_ALERTS = {
 TEMPERATURE_ALERTS = {
     "atencao_alta": {
         "range": (3, 4.9),
-        "title": "Aviso - Temperaturas Elevadas",
+        "title": "Aviso - Temperatura Máxima Elevada",
         "color": "#FF9800",  # Laranja
         "recommendations": [
             "Beba bastante água, mesmo sem sentir sede", 
@@ -62,7 +62,7 @@ TEMPERATURE_ALERTS = {
     },
     "alerta_alta": {
         "range": (5, 6.9),
-        "title": "Aviso - Temperaturas Elevadas",
+        "title": "Aviso - Temperatura Máxima Elevada",
         "color": "#FF5722",  # Laranja escuro
         "recommendations": [
             "Beba bastante água, mesmo sem sentir sede", 
@@ -78,7 +78,7 @@ TEMPERATURE_ALERTS = {
     },
     "emergencia_alta": {
         "range": (7, 30),
-        "title": "Aviso - Temperaturas Elevadas",
+        "title": "Aviso - Temperatura Máxima Elevada",
         "color": "#B71C1C",  # Vermelho escuro
         "recommendations": [
             "Beba bastante água, mesmo sem sentir sede", 
@@ -97,12 +97,11 @@ TEMPERATURE_ALERTS = {
         "title": "Aviso - Previsão de Temperatura Mínima Baixa",
         "color": "#2196F3",  # Azul
         "recommendations": [
-            "Mantenha-se hidratado, não deixe de beber àgua",
+            "Mantenha-se hidratado, não deixe de beber água",
             "Busque se agasalhar bem",
-            "Evite tomar banhos com àgua muito quente", 
+            "Evite tomar banhos com água muito quente", 
             "Mantenha a pele sempre hidratada",
             "Proteja-se do frio, mas tente manter o ambiente arejado",
-            "Mantenha-se seco e evite arrefecer com a roupa transpirada no corpo", 
             "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas no período de mínimas temperaturas"
         ]
     },

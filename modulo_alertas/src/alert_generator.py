@@ -452,7 +452,7 @@ class AlertGenerator:
             if 'temperature_high' in city_alerts:
                 alert = city_alerts['temperature_high']
                 alert_date = self.get_alert_date(alert['seconds'])
-                subject = f"AVISO: Previsão de temperaturas elevadas em {city} para o dia {alert_date}"
+                subject = f"AVISO: Previsão de temperatura máxima elevada em {city} para o dia {alert_date}"
                 
                 if self.alert_service:
                     try:
@@ -494,7 +494,7 @@ class AlertGenerator:
             if 'temperature_low' in city_alerts:
                 alert = city_alerts['temperature_low']
                 alert_date = self.get_alert_date(alert['seconds'])
-                subject = f"AVISO: Previsão de temperaturas baixas em {city} para o dia {alert_date}"
+                subject = f"AVISO: Previsão de temperatura mínima baixa em {city} para o dia {alert_date}"
                 
                 if self.alert_service:
                     try:
