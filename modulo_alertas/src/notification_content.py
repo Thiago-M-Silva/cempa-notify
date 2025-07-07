@@ -110,12 +110,11 @@ TEMPERATURE_ALERTS = {
         "title": "Aviso - Previsão de Temperatura Mínima Baixa",
         "color": "#1976D2",  # Azul escuro
         "recommendations": [
-            "Mantenha-se hidratado, não deixe de beber àgua",
+            "Mantenha-se hidratado, não deixe de beber água",
             "Busque se agasalhar bem",
-            "Evite tomar banhos com àgua muito quente", 
+            "Evite tomar banhos com água muito quente", 
             "Mantenha a pele sempre hidratada",
             "Proteja-se do frio, mas tente manter o ambiente arejado",
-            "Mantenha-se seco e evite arrefecer com a roupa transpirada no corpo", 
             "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas no período de mínimas temperaturas"
         ]
     },
@@ -124,12 +123,11 @@ TEMPERATURE_ALERTS = {
         "title": "Aviso - Previsão de Temperatura Mínima Baixa",
         "color": "#0D47A1",  # Azul muito escuro
         "recommendations": [
-            "Mantenha-se hidratado, não deixe de beber àgua",
+            "Mantenha-se hidratado, não deixe de beber água",
             "Busque se agasalhar bem",
-            "Evite tomar banhos com àgua muito quente", 
+            "Evite tomar banhos com água muito quente", 
             "Mantenha a pele sempre hidratada",
             "Proteja-se do frio, mas tente manter o ambiente arejado",
-            "Mantenha-se seco e evite arrefecer com a roupa transpirada no corpo", 
             "Dê atenção especial a crianças, idosos e pessoas com doenças crônicas no período de mínimas temperaturas"
         ]
     }
