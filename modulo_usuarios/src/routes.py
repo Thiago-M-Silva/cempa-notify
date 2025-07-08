@@ -1,6 +1,40 @@
 from flask import Blueprint, render_template_string, request, jsonify, make_response
-from .services import UserService
+from .services import UserService, AlertService
 from .form import Form
+import uuid
+
+"""
+Rotas de API para gerenciamento de usuários e alertas
+form
+    pagina principal, renderiza o formulario de cadastro de usuários
+
+get_users_by_alert_and_city
+    busca a lista de usuários filtrados por tipo de alerta e cidade
+    parâmetros: alert_type (lista de tipos de alerta), city (lista de cidades)
+
+create_user
+    cria um novo usuário com os dados fornecidos
+    deve-se enviar um body no seguinte formato:
+        {
+            "username": "nome do usuário",
+            "email": "email do usuário",
+            "cities": ["cidade1", "cidade2"],
+            "alert_types": ["tipo1", "tipo2"]
+        }
+
+get_users
+    busca todos os usuários cadastrados
+
+get_user_by_email
+    busca um usuário específico pelo email
+    parâmetros: email (query parameter)
+
+delete_user
+    deleta um usuário pelo UUID (string)
+    
+update_user
+    atualiza os dados de um usuário pelo UUID (string)
+"""
 
 bp = Blueprint('routes', __name__)
 
@@ -8,21 +42,14 @@ bp = Blueprint('routes', __name__)
 def form():
     return render_template_string(Form.form_html)
 
-@bp.route('/test', methods=['GET'])
-def test_route():
-    try:
-        return make_response(jsonify({'message': 'test route'}), 200)
-    except Exception as e:
-        return make_response(jsonify({'error': str(e)}), 400)
-
 @bp.route('/users', methods=['POST'])
 def create_user():
     try:
-        user = UserService.create(request.get_json())
+        data = request.get_json()
+        user = UserService.create(data)
         return make_response(jsonify(user.json()), 201)
     except Exception as e:
-        print(f"Error creating user: {e}")
-        return make_response(jsonify({'Usuario já existe!'}), 400)
+        return make_response(jsonify({'error': str(e)}), 400)
 
 @bp.route('/users/all', methods=['GET'])
 def get_users():
@@ -32,26 +59,81 @@ def get_users():
         if not users:
             return make_response(jsonify({'message': 'no users found'}), 404)
         
-        return make_response(jsonify([u.json() for u in users]), 200)
+        return make_response(jsonify([u.json_public() for u in users]), 200)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
-@bp.route('/users/<int:id>', methods=['DELETE'])
+@bp.route('/users/delete/<string:id>', methods=['GET'])
 def delete_user(id):
     try:
         success = UserService.delete(id)
         if success:
-            return make_response(jsonify({'message': 'user deleted'}), 200)
-        return make_response(jsonify({'error': 'user not found'}), 404)
+            return make_response(jsonify({'message': 'Usuario descadastrado com sucesso.'}), 200)
+        return make_response(jsonify({'error': 'Usuario nao encontrado'}), 404)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
 
-@bp.route('/users/<int:id>', methods=['PUT'])
-def update_user(id):
+@bp.route('/users', methods=['PUT'])
+def update():
+    """
+    Atualiza os alertas de um usuário pelo email.
+    Exemplo: PUT /users
+    Body:
+        {
+            "username": "nome do usuário",
+            "email": "email do usuário",
+            "alerts": [
+                {
+                    "city": "cidade1",
+                    "types": ["tipo1", "tipo2"]
+                }
+            ]
+        }
+    """
     try:
-        user = UserService.update(id, request.get_json())
+        data = request.get_json()
+        if not data or 'email' not in data:
+            return make_response(jsonify({'error': 'Email is required in request body'}), 400)
+            
+        user = UserService.update_by_email(data['email'], data)
         if user:
-            return make_response(jsonify(user.json()), 200)
-        return make_response(jsonify({'error': 'user not found'}), 404)
+            return make_response(jsonify(user.json_public()), 200)
+        return make_response(jsonify({'error': 'User not found'}), 404)
     except Exception as e:
         return make_response(jsonify({'error': str(e)}), 400)
+
+@bp.route('/users/email', methods=['GET'])
+def get_user_by_email():
+    """
+    Busca um usuário pelo email.
+    Exemplo: /users/email?email=usuario@exemplo.com
+    """
+    try:
+        email = request.args.get('email')
+        
+        if not email:
+            return make_response(jsonify({'error': 'Email parameter is required'}), 400)
+            
+        user = UserService.get_user_by_email(email)
+        
+        if not user:
+            return make_response(jsonify({'message': 'User not found'}), 404)
+        
+        return make_response(jsonify(user.json_public()), 200)
+    except Exception as e:
+        return make_response(jsonify({'error': str(e)}), 400)
+
+@bp.route('/users/email', methods=['DELETE'])
+def delete_user_by_email():
+    """
+    Deleta um usuário pelo email.
+    Exemplo: DELETE /users/email?email=usuario@exemplo.com
+    """
+    email = request.args.get('email')
+    if not email:
+        return make_response(jsonify({'error': 'Email é obrigatório'}), 400)
+    success = UserService.delete_by_email(email)
+    if success:
+        return make_response(jsonify({'message': 'Usuário descadastrado com sucesso.'}), 200)
+    else:
+        return make_response(jsonify({'error': 'Usuário não encontrado'}), 404)

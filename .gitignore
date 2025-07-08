@@ -1,3 +1,11 @@
 .env
 modulo_usuarios/src/__pycache__/
-./tmp_files
+tmp_files/
+*.db
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+*.pyc
+*.log
+.DS_Store
